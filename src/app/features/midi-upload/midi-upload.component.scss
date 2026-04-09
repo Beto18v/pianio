@@ -1,0 +1,140 @@
+:host {
+  display: block;
+}
+
+.upload-panel {
+  display: grid;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid #c8d8d1;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.upload-panel__header {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.upload-panel__eyebrow {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #2f6f5e;
+}
+
+.upload-panel__description,
+.upload-panel__helper,
+.upload-panel__status,
+.upload-panel__selected-file {
+  margin: 0;
+  color: #355046;
+  line-height: 1.5;
+}
+
+.upload-panel__controls {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.upload-panel__label {
+  font-weight: 600;
+  color: #18211d;
+}
+
+.upload-panel__input {
+  width: 100%;
+  max-width: 30rem;
+  color: #18211d;
+}
+
+.upload-panel__status {
+  padding: 0.875rem 1rem;
+  border-radius: 8px;
+  background: #edf5f1;
+}
+
+.upload-panel__status--error {
+  color: #7b2d26;
+  background: #f9e6e1;
+}
+
+.upload-panel__result {
+  display: grid;
+  gap: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #d7e3dd;
+}
+
+.upload-panel__summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 1rem;
+  margin: 0;
+}
+
+.upload-panel__summary div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.upload-panel__summary dt {
+  font-size: 0.875rem;
+  color: #547266;
+}
+
+.upload-panel__summary dd {
+  margin: 0;
+  font-weight: 600;
+  color: #18211d;
+}
+
+.upload-panel__notes {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.upload-panel__table-wrapper {
+  overflow-x: auto;
+  border: 1px solid #d7e3dd;
+  border-radius: 8px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 0.75rem 0.875rem;
+  text-align: left;
+  border-bottom: 1px solid #d7e3dd;
+  white-space: nowrap;
+}
+
+thead {
+  background: #edf5f1;
+}
+
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+h2,
+h3 {
+  margin: 0;
+  color: #18211d;
+}
+
+@media (max-width: 640px) {
+  .upload-panel {
+    padding: 1rem;
+  }
+
+  th,
+  td {
+    padding: 0.625rem 0.75rem;
+  }
+}

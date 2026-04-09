@@ -1,0 +1,72 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+  color: #18211d;
+  background: #f3f6f4;
+}
+
+.app-shell {
+  min-height: 100dvh;
+  padding: 2rem 1.25rem 3rem;
+}
+
+.app-shell__inner {
+  max-width: 960px;
+  margin: 0 auto;
+  display: grid;
+  gap: 2rem;
+}
+
+.app-shell__header {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.app-shell__description,
+.app-shell__supporting-copy {
+  margin: 0;
+  max-width: 60rem;
+  line-height: 1.6;
+  color: #355046;
+}
+
+.app-shell__scope {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.app-shell__scope-list {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+}
+
+.app-shell__scope-list li {
+  padding: 0.875rem 1rem;
+  border: 1px solid #c8d8d1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1f3029;
+}
+
+h1,
+h2 {
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+h2 {
+  font-size: 1.25rem;
+}
+
+@media (max-width: 640px) {
+  .app-shell {
+    padding-inline: 1rem;
+  }
+}
