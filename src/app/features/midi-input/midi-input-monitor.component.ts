@@ -27,9 +27,7 @@ export class MidiInputMonitorComponent {
   );
   protected readonly connectionState = this.midiInputService.connectionState;
   protected readonly errorMessage = this.midiInputService.errorMessage;
-  protected readonly deviceNames = computed(() =>
-    this.realDevices().map((device) => device.name),
-  );
+  protected readonly deviceNames = computed(() => this.realDevices().map((device) => device.name));
   protected readonly primaryDeviceName = computed(() => this.deviceNames()[0] ?? null);
   protected readonly statusLabel = computed(() => {
     const state = this.connectionState();
