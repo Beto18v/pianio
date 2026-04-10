@@ -8,7 +8,7 @@ export const siteContent = {
     'Parsing en frontend con @tonejs/midi',
     'Resumen tecnico para verificacion rapida',
     'Base visual para teclado y notas',
-    'Transporte base de playback con estado de tiempo',
+    'Transporte base de playback con tiempo y audio minimo',
   ],
   upload: {
     eyebrow: 'Entrada local',
@@ -60,7 +60,7 @@ export const siteContent = {
     eyebrow: 'Playback',
     heading: 'Controles de reproduccion',
     description:
-      'Transporte base para validar estado, tiempo actual y acciones minimas antes de sumar audio o practica.',
+      'Transporte base con tiempo en segundos y una capa minima de audio sintetizada para validar flujo end-to-end.',
     idleState: 'Carga un archivo MIDI para habilitar el transporte base.',
     actions: {
       play: 'Play',

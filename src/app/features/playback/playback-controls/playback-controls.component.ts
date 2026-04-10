@@ -2,6 +2,7 @@ import { DecimalPipe } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
 
 import { siteContent } from '../../../core/site';
+import { PlaybackAudioService } from '../../../services/playback-audio.service';
 import { PlaybackService } from '../../../services/playback.service';
 
 @Component({
@@ -13,6 +14,7 @@ import { PlaybackService } from '../../../services/playback.service';
 export class PlaybackControlsComponent {
   protected readonly site = siteContent;
   protected readonly playbackService = inject(PlaybackService);
+  protected readonly playbackAudioService = inject(PlaybackAudioService);
   protected readonly song = this.playbackService.song;
   protected readonly playbackState = this.playbackService.playbackState;
   protected readonly hasSong = this.playbackService.hasSong;
@@ -24,6 +26,7 @@ export class PlaybackControlsComponent {
   });
 
   protected play(): void {
+    void this.playbackAudioService.prepareForPlayback();
     this.playbackService.play();
   }
 
