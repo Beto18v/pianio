@@ -80,6 +80,26 @@
   inset: 0;
 }
 
+.note-roll-panel__lanes {
+  z-index: 1;
+}
+
+.note-roll-panel__notes {
+  z-index: 2;
+}
+
+.note-roll-panel__playhead {
+  position: absolute;
+  z-index: 3;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #d04f2a;
+  box-shadow: 0 0 0 1px rgb(208 79 42 / 0.2);
+  pointer-events: none;
+  transform: translateY(-1px);
+}
+
 .note-roll-panel__lane {
   position: absolute;
   top: 0;
@@ -104,6 +124,12 @@
 
 .note-roll-panel__note--black {
   background: linear-gradient(to bottom, #7dc0aa 0%, #3f8c74 100%);
+}
+
+.note-roll-panel__note--active {
+  border-color: #a33b1d;
+  background: linear-gradient(to bottom, #ffd1aa 0%, #ee8f5d 100%);
+  box-shadow: 0 0.24rem 0.4rem rgb(163 59 29 / 0.3);
 }
 
 h2 {

@@ -31,6 +31,8 @@
             [style.height.px]="layout.totalHeightPx"
             [style.--white-key-count]="keyboardLayout.whiteKeyCount"
           >
+            <div class="note-roll-panel__playhead" aria-hidden="true" [style.top.px]="playheadTopPx()"></div>
+
             <div class="note-roll-panel__lanes" aria-hidden="true">
               @for (key of laneKeys; track key.pitch) {
                 <div
@@ -51,6 +53,7 @@
                 <div
                   class="note-roll-panel__note"
                   [class.note-roll-panel__note--black]="note.isBlack"
+                  [class.note-roll-panel__note--active]="isNoteActive(note)"
                   [attr.data-pitch]="note.pitch"
                   [style.left.%]="note.leftPercent"
                   [style.width.%]="note.widthPercent"

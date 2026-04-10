@@ -18,6 +18,7 @@ export class App {
   protected readonly site = siteContent;
   private readonly playbackService = inject(PlaybackService);
   protected readonly currentSong = this.playbackService.song;
+  protected readonly playbackState = this.playbackService.playbackState;
 
   protected onSongParsed(song: MidiSong | null): void {
     this.playbackService.setSong(song);

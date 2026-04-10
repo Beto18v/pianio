@@ -18,6 +18,6 @@
     <app-midi-upload (songParsed)="onSongParsed($event)" />
     <app-playback-controls />
     <app-piano-keyboard />
-    <app-note-roll [song]="currentSong()" />
+    <app-note-roll [song]="currentSong()" [currentTime]="playbackState().currentTime" />
   </div>
 </main>
