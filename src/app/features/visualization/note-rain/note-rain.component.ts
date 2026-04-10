@@ -10,12 +10,10 @@ import {
 } from '@angular/core';
 
 import { MidiSong } from '../../../domain/models/midi-song.model';
+import { createSongNoteIndex } from '../../../domain/utils/song-note-index.util';
 import { KeyboardLayout } from '../models/keyboard-layout.model';
 import { MVP_KEYBOARD_LAYOUT } from '../utils/keyboard-layout.util';
-import {
-  DEFAULT_NOTE_RAIN_LAYOUT_CONFIG,
-  createNoteRainLayout,
-} from '../utils/note-rain.util';
+import { DEFAULT_NOTE_RAIN_LAYOUT_CONFIG, createNoteRainLayout } from '../utils/note-rain.util';
 
 @Component({
   selector: 'app-note-rain',
@@ -30,6 +28,11 @@ export class NoteRainComponent implements AfterViewInit {
   private readonly hostElement = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly viewportHeightState = signal(DEFAULT_NOTE_RAIN_LAYOUT_CONFIG.viewportHeightPx);
+  private readonly songIndex = computed(() => {
+    const song = this.song();
+
+    return song ? createSongNoteIndex(song.notes) : null;
+  });
 
   protected readonly layout = computed(() => {
     const song = this.song();
@@ -46,6 +49,7 @@ export class NoteRainComponent implements AfterViewInit {
         viewportHeightPx: this.viewportHeightState(),
       },
       this.keyboardLayout(),
+      this.songIndex(),
     );
   });
   protected readonly accessibleLabel = computed(() => {

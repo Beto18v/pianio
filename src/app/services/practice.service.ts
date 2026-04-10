@@ -1,8 +1,11 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
 
-import { NoteEvent } from '../domain/models/note-event.model';
 import { PracticeState, PracticeWaitModeStatus } from '../domain/models/practice-state.model';
 import { UserPlayedNote } from '../domain/models/user-played-note.model';
+import {
+  createPracticeStepIndex,
+  getExpectedPitchesAtTime as getExpectedPitchesAtTimeFromIndex,
+} from '../domain/utils/practice-step-index.util';
 import { MidiInputService } from './midi-input.service';
 import { PlaybackService } from './playback.service';
 
@@ -23,13 +26,18 @@ export class PracticeService {
   private readonly midiInputService = inject(MidiInputService);
   private readonly practiceModeEnabledState = signal(false);
   private readonly playIntentState = signal(false);
+  private readonly practiceStepIndex = computed(() => {
+    const song = this.playbackService.song();
+
+    return song ? createPracticeStepIndex(song.notes) : null;
+  });
 
   readonly state = computed<PracticeState>(() => {
-    const song = this.playbackService.song();
     const playbackState = this.playbackService.playbackState();
     const activeInputPitches = toSortedPitches(this.midiInputService.activePitches());
-    const expectedPitches = song
-      ? getExpectedPitchesAtTime(song.notes, playbackState.currentTime)
+    const practiceStepIndex = this.practiceStepIndex();
+    const expectedPitches = practiceStepIndex
+      ? getExpectedPitchesAtTimeFromIndex(practiceStepIndex, playbackState.currentTime)
       : [];
     const pitchEvaluation = evaluatePracticePitches(expectedPitches, activeInputPitches);
     const isPracticeModeEnabled = this.practiceModeEnabledState();
@@ -177,31 +185,6 @@ function evaluatePracticePitches(
     extraInputPitches,
     isMatch,
   };
-}
-
-function getExpectedPitchesAtTime(notes: ReadonlyArray<NoteEvent>, currentTime: number): number[] {
-  if (!Number.isFinite(currentTime)) {
-    return [];
-  }
-
-  const activePitches = notes
-    .filter((note) => {
-      if (
-        !Number.isFinite(note.startTime) ||
-        !Number.isFinite(note.duration) ||
-        note.duration <= 0
-      ) {
-        return false;
-      }
-
-      const noteEnd = note.startTime + note.duration;
-
-      return currentTime >= note.startTime && currentTime < noteEnd;
-    })
-    .map((note) => note.pitch)
-    .filter((pitch): pitch is number => Number.isInteger(pitch) && pitch >= 0 && pitch <= 127);
-
-  return Array.from(new Set(activePitches)).sort((left, right) => left - right);
 }
 
 function toSortedPitches(pitches: ReadonlySet<number>): number[] {

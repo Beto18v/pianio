@@ -1,5 +1,10 @@
 import { MidiSong } from '../../../domain/models/midi-song.model';
 import { NoteEvent } from '../../../domain/models/note-event.model';
+import {
+  SongNoteIndex,
+  createSongNoteIndex,
+  getNotesStartingInRange,
+} from '../../../domain/utils/song-note-index.util';
 import { KeyboardLayout } from '../models/keyboard-layout.model';
 import { MVP_KEYBOARD_LAYOUT, getPitchHorizontalPosition } from './keyboard-layout.util';
 
@@ -84,10 +89,15 @@ export function createNoteRainLayout(
   currentTime: number,
   config: NoteRainLayoutConfig = DEFAULT_NOTE_RAIN_LAYOUT_CONFIG,
   keyboardLayout: KeyboardLayout = MVP_KEYBOARD_LAYOUT,
+  noteIndex: SongNoteIndex | null = null,
 ): NoteRainLayout {
   validateLayoutConfig(config);
 
-  const notes = song.notes
+  const resolvedIndex = noteIndex ?? createSongNoteIndex(song.notes);
+  const { startTimeMin, startTimeMax } = getStartTimeWindow(currentTime, config, resolvedIndex);
+  const candidateNotes = getNotesStartingInRange(resolvedIndex, startTimeMin, startTimeMax);
+
+  const notes = candidateNotes
     .map((note) => getFallingNote(note, currentTime, config, keyboardLayout))
     .filter((note): note is FallingNote => note !== null);
 
@@ -95,6 +105,31 @@ export function createNoteRainLayout(
     hitLineTopPx: config.viewportHeightPx - config.hitLineOffsetPx,
     notes,
     hiddenNoteCount: song.notes.length - notes.length,
+  };
+}
+
+function getStartTimeWindow(
+  currentTime: number,
+  config: NoteRainLayoutConfig,
+  noteIndex: SongNoteIndex,
+): { startTimeMin: number; startTimeMax: number } {
+  const hitLineTopPx = config.viewportHeightPx - config.hitLineOffsetPx;
+  const pixelsPerSecond = config.pixelsPerSecond;
+
+  if (!Number.isFinite(currentTime)) {
+    return { startTimeMin: Number.POSITIVE_INFINITY, startTimeMax: Number.NEGATIVE_INFINITY };
+  }
+
+  const maxNoteHeightPx = Math.max(
+    noteIndex.maxNoteDurationSeconds * pixelsPerSecond,
+    config.minNoteHeightPx,
+  );
+  const lookaheadSeconds = hitLineTopPx / pixelsPerSecond;
+  const lookbackSeconds = (config.hitLineOffsetPx + maxNoteHeightPx) / pixelsPerSecond;
+
+  return {
+    startTimeMin: currentTime - lookbackSeconds,
+    startTimeMax: currentTime + lookaheadSeconds,
   };
 }
 
