@@ -4,15 +4,15 @@ import { MidiSong } from '../domain/models/midi-song.model';
 import { NoteEvent } from '../domain/models/note-event.model';
 import { PlaybackService } from './playback.service';
 
-const MAX_POLYPHONY = 12;
-const LOOKAHEAD_SECONDS = 0.16;
-const SCHEDULE_LEAD_SECONDS = 0.002;
-const FORWARD_RESET_THRESHOLD_SECONDS = 0.45;
-const BACKWARD_RESET_THRESHOLD_SECONDS = -0.02;
-const ATTACK_SECONDS = 0.01;
-const DECAY_SECONDS = 0.045;
-const SUSTAIN_LEVEL = 0.72;
-const RELEASE_SECONDS = 0.06;
+const MAX_POLYPHONY = 10;
+const LOOKAHEAD_SECONDS = 0.12;
+const SCHEDULE_LEAD_SECONDS = 0.003;
+const FORWARD_RESET_THRESHOLD_SECONDS = 0.55;
+const BACKWARD_RESET_THRESHOLD_SECONDS = -0.03;
+const ATTACK_SECONDS = 0.008;
+const DECAY_SECONDS = 0.038;
+const SUSTAIN_LEVEL = 0.66;
+const RELEASE_SECONDS = 0.05;
 
 interface ActiveVoice {
   oscillator: OscillatorNode;
@@ -266,9 +266,9 @@ export class PlaybackAudioService {
     const gain = audioContext.createGain();
     const velocityGain = velocityToGain(note.velocity);
     const polyphonyCompensation = 1 / Math.sqrt(Math.max(activeNoteCount, 1));
-    const voicePeakGain = velocityGain * 0.16 * polyphonyCompensation;
+    const voicePeakGain = velocityGain * 0.14 * polyphonyCompensation;
     const voiceSustainGain = voicePeakGain * SUSTAIN_LEVEL;
-    const filterCutoff = clamp(900 + velocityGain * 3800 + frequency * 1.3, 700, 7800);
+    const filterCutoff = clamp(850 + velocityGain * 3200 + frequency * 1.2, 650, 6800);
 
     if (this.pianoWave) {
       oscillator.setPeriodicWave(this.pianoWave);
@@ -356,12 +356,12 @@ export class PlaybackAudioService {
       this.masterCompressorNode = this.audioContext.createDynamicsCompressor();
       this.pianoWave = createPianoWave(this.audioContext);
 
-      this.masterGainNode.gain.setValueAtTime(0.75, this.audioContext.currentTime);
-      this.masterCompressorNode.threshold.setValueAtTime(-20, this.audioContext.currentTime);
-      this.masterCompressorNode.knee.setValueAtTime(14, this.audioContext.currentTime);
-      this.masterCompressorNode.ratio.setValueAtTime(7, this.audioContext.currentTime);
-      this.masterCompressorNode.attack.setValueAtTime(0.003, this.audioContext.currentTime);
-      this.masterCompressorNode.release.setValueAtTime(0.12, this.audioContext.currentTime);
+      this.masterGainNode.gain.setValueAtTime(0.68, this.audioContext.currentTime);
+      this.masterCompressorNode.threshold.setValueAtTime(-18, this.audioContext.currentTime);
+      this.masterCompressorNode.knee.setValueAtTime(12, this.audioContext.currentTime);
+      this.masterCompressorNode.ratio.setValueAtTime(8, this.audioContext.currentTime);
+      this.masterCompressorNode.attack.setValueAtTime(0.002, this.audioContext.currentTime);
+      this.masterCompressorNode.release.setValueAtTime(0.09, this.audioContext.currentTime);
 
       this.masterGainNode.connect(this.masterCompressorNode);
       this.masterCompressorNode.connect(this.audioContext.destination);
