@@ -125,7 +125,8 @@ describe('PlaybackControlsComponent', () => {
     TestBed.flushEffects();
     fixture.detectChanges();
 
-    expect(pauseSpy).toHaveBeenCalled();
-    expect(playbackService.playbackState().isPlaying).toBe(false);
+    expect(pauseSpy).not.toHaveBeenCalled();
+    expect(playbackService.playbackState().isPlaying).toBe(true);
+    expect(compiled.textContent).toContain('Avanzando');
   });
 });

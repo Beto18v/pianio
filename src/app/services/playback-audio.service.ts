@@ -5,17 +5,24 @@ import { NoteEvent } from '../domain/models/note-event.model';
 import { PlaybackService } from './playback.service';
 
 const MAX_POLYPHONY = 12;
-const ATTACK_SECONDS = 0.005;
-const RELEASE_SECONDS = 0.03;
+const LOOKAHEAD_SECONDS = 0.16;
+const SCHEDULE_LEAD_SECONDS = 0.002;
+const FORWARD_RESET_THRESHOLD_SECONDS = 0.45;
+const BACKWARD_RESET_THRESHOLD_SECONDS = -0.02;
+const ATTACK_SECONDS = 0.01;
+const DECAY_SECONDS = 0.045;
+const SUSTAIN_LEVEL = 0.72;
+const RELEASE_SECONDS = 0.06;
 
 interface ActiveVoice {
   oscillator: OscillatorNode;
+  filter: BiquadFilterNode;
   gain: GainNode;
+  startTime: number;
 }
 
-interface IndexedNote {
-  index: number;
-  note: NoteEvent;
+interface ScheduledWindowVoice {
+  endTime: number;
 }
 
 interface WindowWithWebkitAudioContext extends Window {
@@ -29,8 +36,18 @@ export class PlaybackAudioService {
   private readonly playbackService = inject(PlaybackService);
 
   private readonly activeVoices = new Map<number, ActiveVoice>();
+  private scheduledWindowVoices: ScheduledWindowVoice[] = [];
   private audioContext: AudioContext | null = null;
   private masterGainNode: GainNode | null = null;
+  private masterCompressorNode: DynamicsCompressorNode | null = null;
+  private pianoWave: PeriodicWave | null = null;
+  private scheduledSong: MidiSong | null = null;
+  private songCursor = 0;
+  private scheduledThroughTime = 0;
+  private wasPlaying = false;
+  private lastTransportTime = 0;
+  private songTimeAnchor = 0;
+  private audioTimeAnchor = 0;
 
   constructor() {
     effect(() => {
@@ -52,8 +69,21 @@ export class PlaybackAudioService {
   }
 
   private syncWithTransport(song: MidiSong | null, currentTime: number, isPlaying: boolean): void {
-    if (!song || !isPlaying) {
+    if (!song) {
       this.stopAllVoices();
+      this.resetSchedulerState(null, 0, false);
+      return;
+    }
+
+    const safeCurrentTime = clampSongTime(currentTime, song.duration);
+    const songChanged = song !== this.scheduledSong;
+
+    if (!isPlaying) {
+      if (this.wasPlaying || songChanged) {
+        this.stopAllVoices();
+      }
+
+      this.resetSchedulerState(song, safeCurrentTime, false);
       return;
     }
 
@@ -63,28 +93,165 @@ export class PlaybackAudioService {
       return;
     }
 
-    const nextActiveNotes = getActiveNotes(song.notes, currentTime);
-    const nextActiveIds = new Set(nextActiveNotes.map(({ index }) => index));
+    this.updateAudioAnchor(safeCurrentTime, audioContext.currentTime);
 
-    for (const activeId of Array.from(this.activeVoices.keys())) {
-      if (!nextActiveIds.has(activeId)) {
-        this.stopVoice(activeId, audioContext);
-      }
+    const needsRehydrate =
+      songChanged || !this.wasPlaying || hasTransportJump(this.lastTransportTime, safeCurrentTime);
+
+    if (needsRehydrate) {
+      this.stopAllVoices();
+      this.resetSchedulerState(song, safeCurrentTime, true);
+      this.rehydrateActiveNotes(song, safeCurrentTime, audioContext);
     }
 
-    for (const { index, note } of nextActiveNotes) {
-      if (this.activeVoices.has(index)) {
+    this.scheduleLookahead(song, safeCurrentTime, audioContext);
+    this.wasPlaying = true;
+    this.lastTransportTime = safeCurrentTime;
+    this.scheduledSong = song;
+  }
+
+  private resetSchedulerState(
+    song: MidiSong | null,
+    currentTime: number,
+    isPlaying: boolean,
+  ): void {
+    this.scheduledSong = song;
+    this.songCursor = song ? findFirstNoteStartingAtOrAfter(song.notes, currentTime) : 0;
+    this.scheduledThroughTime = currentTime;
+    this.scheduledWindowVoices = [];
+    this.wasPlaying = isPlaying;
+    this.lastTransportTime = currentTime;
+    this.songTimeAnchor = currentTime;
+
+    if (this.audioContext) {
+      this.audioTimeAnchor = this.audioContext.currentTime;
+    }
+  }
+
+  private updateAudioAnchor(songTime: number, audioTime: number): void {
+    this.songTimeAnchor = songTime;
+    this.audioTimeAnchor = audioTime;
+  }
+
+  private rehydrateActiveNotes(
+    song: MidiSong,
+    currentTime: number,
+    audioContext: AudioContext,
+  ): void {
+    const activeNotes = song.notes
+      .map((note, index) => ({ index, note }))
+      .filter(({ note }) => note.startTime < currentTime && isNoteActive(note, currentTime))
+      .sort(
+        (left, right) =>
+          normalizeVelocity(right.note.velocity) - normalizeVelocity(left.note.velocity),
+      )
+      .slice(0, MAX_POLYPHONY);
+
+    for (const { note } of activeNotes) {
+      this.pruneWindowVoices(note.startTime);
+      this.scheduledWindowVoices.push({
+        endTime: note.startTime + note.duration,
+      });
+    }
+
+    for (const { index, note } of activeNotes) {
+      this.scheduleVoice(index, note, currentTime, audioContext, activeNotes.length);
+    }
+  }
+
+  private scheduleLookahead(song: MidiSong, currentTime: number, audioContext: AudioContext): void {
+    const windowEndTime = Math.min(song.duration, currentTime + LOOKAHEAD_SECONDS);
+
+    if (windowEndTime <= this.scheduledThroughTime) {
+      return;
+    }
+
+    while (this.songCursor < song.notes.length) {
+      const noteId = this.songCursor;
+      const note = song.notes[noteId];
+
+      if (!isSchedulableNote(note)) {
+        this.songCursor += 1;
         continue;
       }
 
-      this.startVoice(index, note, audioContext, nextActiveNotes.length);
+      if (note.startTime > windowEndTime) {
+        break;
+      }
+
+      this.songCursor += 1;
+
+      if (note.startTime + note.duration <= currentTime) {
+        continue;
+      }
+
+      this.pruneWindowVoices(note.startTime);
+
+      if (this.scheduledWindowVoices.length >= MAX_POLYPHONY) {
+        continue;
+      }
+
+      this.scheduledWindowVoices.push({
+        endTime: note.startTime + note.duration,
+      });
+      this.scheduleVoice(
+        noteId,
+        note,
+        currentTime,
+        audioContext,
+        Math.min(this.scheduledWindowVoices.length, MAX_POLYPHONY),
+      );
     }
+
+    this.scheduledThroughTime = windowEndTime;
+  }
+
+  private pruneWindowVoices(songTime: number): void {
+    this.scheduledWindowVoices = this.scheduledWindowVoices.filter(
+      (voice) => voice.endTime > songTime,
+    );
+  }
+
+  private mapSongTimeToAudioTime(songTime: number): number {
+    return this.audioTimeAnchor + (songTime - this.songTimeAnchor);
+  }
+
+  private scheduleVoice(
+    noteId: number,
+    note: NoteEvent,
+    currentSongTime: number,
+    audioContext: AudioContext,
+    activeNoteCount: number,
+  ): void {
+    if (this.activeVoices.has(noteId)) {
+      return;
+    }
+
+    const noteEndTime = note.startTime + note.duration;
+
+    if (noteEndTime <= currentSongTime) {
+      return;
+    }
+
+    const noteOnSongTime = Math.max(note.startTime, currentSongTime);
+    const noteOnAudioTime = Math.max(
+      audioContext.currentTime + SCHEDULE_LEAD_SECONDS,
+      this.mapSongTimeToAudioTime(noteOnSongTime),
+    );
+    const noteOffAudioTime = Math.max(
+      noteOnAudioTime + 0.01,
+      this.mapSongTimeToAudioTime(noteEndTime),
+    );
+
+    this.startVoice(noteId, note, audioContext, noteOnAudioTime, noteOffAudioTime, activeNoteCount);
   }
 
   private startVoice(
     noteId: number,
     note: NoteEvent,
     audioContext: AudioContext,
+    startTime: number,
+    noteOffTime: number,
     activeNoteCount: number,
   ): void {
     const masterGainNode = this.masterGainNode;
@@ -94,22 +261,45 @@ export class PlaybackAudioService {
       return;
     }
 
-    const now = audioContext.currentTime;
     const oscillator = audioContext.createOscillator();
+    const filter = audioContext.createBiquadFilter();
     const gain = audioContext.createGain();
-    const voiceGain = (normalizeVelocity(note.velocity) * 0.14) / Math.max(activeNoteCount, 1);
+    const velocityGain = velocityToGain(note.velocity);
+    const polyphonyCompensation = 1 / Math.sqrt(Math.max(activeNoteCount, 1));
+    const voicePeakGain = velocityGain * 0.16 * polyphonyCompensation;
+    const voiceSustainGain = voicePeakGain * SUSTAIN_LEVEL;
+    const filterCutoff = clamp(900 + velocityGain * 3800 + frequency * 1.3, 700, 7800);
 
-    oscillator.type = 'triangle';
-    oscillator.frequency.setValueAtTime(frequency, now);
+    if (this.pianoWave) {
+      oscillator.setPeriodicWave(this.pianoWave);
+    } else {
+      oscillator.type = 'triangle';
+    }
 
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(voiceGain, now + ATTACK_SECONDS);
+    oscillator.frequency.setValueAtTime(frequency, startTime);
+    filter.type = 'lowpass';
+    filter.Q.setValueAtTime(0.9, startTime);
+    filter.frequency.setValueAtTime(filterCutoff, startTime);
 
-    oscillator.connect(gain);
+    gain.gain.setValueAtTime(0.0001, startTime);
+    gain.gain.linearRampToValueAtTime(voicePeakGain, startTime + ATTACK_SECONDS);
+    gain.gain.linearRampToValueAtTime(voiceSustainGain, startTime + ATTACK_SECONDS + DECAY_SECONDS);
+    gain.gain.setValueAtTime(voiceSustainGain, noteOffTime);
+    gain.gain.linearRampToValueAtTime(0.0001, noteOffTime + RELEASE_SECONDS);
+
+    oscillator.connect(filter);
+    filter.connect(gain);
     gain.connect(masterGainNode);
-    oscillator.start(now);
+    oscillator.onended = () => {
+      oscillator.disconnect();
+      filter.disconnect();
+      gain.disconnect();
+      this.activeVoices.delete(noteId);
+    };
+    oscillator.start(startTime);
+    oscillator.stop(noteOffTime + RELEASE_SECONDS + 0.005);
 
-    this.activeVoices.set(noteId, { oscillator, gain });
+    this.activeVoices.set(noteId, { oscillator, filter, gain, startTime });
   }
 
   private stopVoice(noteId: number, audioContext: AudioContext): void {
@@ -120,18 +310,14 @@ export class PlaybackAudioService {
     }
 
     const now = audioContext.currentTime;
-    const currentGain = voice.gain.gain.value;
+    const releaseStartTime = Math.max(now, voice.startTime);
+    const currentGain = Math.max(voice.gain.gain.value, 0.0001);
 
-    voice.gain.gain.cancelScheduledValues(now);
-    voice.gain.gain.setValueAtTime(currentGain, now);
-    voice.gain.gain.linearRampToValueAtTime(0, now + RELEASE_SECONDS);
+    voice.gain.gain.cancelScheduledValues(releaseStartTime);
+    voice.gain.gain.setValueAtTime(currentGain, releaseStartTime);
+    voice.gain.gain.linearRampToValueAtTime(0.0001, releaseStartTime + RELEASE_SECONDS);
 
-    voice.oscillator.onended = () => {
-      voice.oscillator.disconnect();
-      voice.gain.disconnect();
-    };
-
-    voice.oscillator.stop(now + RELEASE_SECONDS + 0.005);
+    voice.oscillator.stop(releaseStartTime + RELEASE_SECONDS + 0.005);
     this.activeVoices.delete(noteId);
   }
 
@@ -146,6 +332,8 @@ export class PlaybackAudioService {
     for (const noteId of Array.from(this.activeVoices.keys())) {
       this.stopVoice(noteId, audioContext);
     }
+
+    this.scheduledWindowVoices = [];
   }
 
   private ensureAudioContext(): AudioContext | null {
@@ -165,27 +353,26 @@ export class PlaybackAudioService {
 
       this.audioContext = new audioContextConstructor();
       this.masterGainNode = this.audioContext.createGain();
-      this.masterGainNode.gain.setValueAtTime(0.22, this.audioContext.currentTime);
-      this.masterGainNode.connect(this.audioContext.destination);
+      this.masterCompressorNode = this.audioContext.createDynamicsCompressor();
+      this.pianoWave = createPianoWave(this.audioContext);
+
+      this.masterGainNode.gain.setValueAtTime(0.75, this.audioContext.currentTime);
+      this.masterCompressorNode.threshold.setValueAtTime(-20, this.audioContext.currentTime);
+      this.masterCompressorNode.knee.setValueAtTime(14, this.audioContext.currentTime);
+      this.masterCompressorNode.ratio.setValueAtTime(7, this.audioContext.currentTime);
+      this.masterCompressorNode.attack.setValueAtTime(0.003, this.audioContext.currentTime);
+      this.masterCompressorNode.release.setValueAtTime(0.12, this.audioContext.currentTime);
+
+      this.masterGainNode.connect(this.masterCompressorNode);
+      this.masterCompressorNode.connect(this.audioContext.destination);
     }
 
     return this.audioContext;
   }
 }
 
-function getActiveNotes(notes: ReadonlyArray<NoteEvent>, currentTime: number): IndexedNote[] {
-  if (!Number.isFinite(currentTime)) {
-    return [];
-  }
-
-  return notes
-    .map((note, index) => ({ index, note }))
-    .filter(({ note }) => isNoteActive(note, currentTime))
-    .sort(
-      (left, right) =>
-        normalizeVelocity(right.note.velocity) - normalizeVelocity(left.note.velocity),
-    )
-    .slice(0, MAX_POLYPHONY);
+function isSchedulableNote(note: NoteEvent): boolean {
+  return Number.isFinite(note.startTime) && Number.isFinite(note.duration) && note.duration > 0;
 }
 
 function isNoteActive(note: NoteEvent, currentTime: number): boolean {
@@ -208,6 +395,43 @@ function normalizeVelocity(velocity: number): number {
   return clamp(normalized, 0.05, 1);
 }
 
+function findFirstNoteStartingAtOrAfter(notes: ReadonlyArray<NoteEvent>, time: number): number {
+  let low = 0;
+  let high = notes.length;
+
+  while (low < high) {
+    const middle = Math.floor((low + high) / 2);
+
+    if (notes[middle].startTime < time) {
+      low = middle + 1;
+    } else {
+      high = middle;
+    }
+  }
+
+  return low;
+}
+
+function hasTransportJump(previousTime: number, currentTime: number): boolean {
+  const delta = currentTime - previousTime;
+
+  return delta < BACKWARD_RESET_THRESHOLD_SECONDS || delta > FORWARD_RESET_THRESHOLD_SECONDS;
+}
+
+function clampSongTime(time: number, duration: number): number {
+  if (!Number.isFinite(time)) {
+    return 0;
+  }
+
+  return clamp(time, 0, duration);
+}
+
+function velocityToGain(velocity: number): number {
+  const normalizedVelocity = normalizeVelocity(velocity);
+
+  return Math.pow(normalizedVelocity, 1.45);
+}
+
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
@@ -218,4 +442,11 @@ function midiToFrequency(pitch: number): number {
   }
 
   return 440 * 2 ** ((pitch - 69) / 12);
+}
+
+function createPianoWave(audioContext: AudioContext): PeriodicWave {
+  const real = new Float32Array([0, 0.75, 0.3, 0.16, 0.09, 0.06, 0.04, 0.028, 0.02, 0.014, 0.01]);
+  const imag = new Float32Array(real.length);
+
+  return audioContext.createPeriodicWave(real, imag, { disableNormalization: false });
 }

@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import { NoteEvent } from '../models/note-event.model';
-import { createPracticeStepIndex, getExpectedPitchesAtTime } from './practice-step-index.util';
+import {
+  createPracticeStepIndex,
+  getExpectedPitchesAtTime,
+  getPracticeStepIndexAtTime,
+} from './practice-step-index.util';
 
 describe('practice-step-index.util', () => {
   it('groups notes into steps and computes max duration', () => {
@@ -61,5 +65,26 @@ describe('practice-step-index.util', () => {
   it('throws on invalid epsilonSeconds', () => {
     expect(() => createPracticeStepIndex([], { epsilonSeconds: Number.NaN })).toThrow();
     expect(() => createPracticeStepIndex([], { epsilonSeconds: -1 })).toThrow();
+  });
+
+  it('selects the current or next step using time tolerance', () => {
+    const notes: NoteEvent[] = [
+      { pitch: 60, velocity: 0.7, startTime: 0, duration: 0.5, track: 0 },
+      { pitch: 64, velocity: 0.7, startTime: 1, duration: 0.5, track: 0 },
+    ];
+
+    const index = createPracticeStepIndex(notes, { epsilonSeconds: 0.04 });
+
+    expect(getPracticeStepIndexAtTime(index, 0.1, { toleranceSeconds: 0.08 })).toBe(0);
+    expect(getPracticeStepIndexAtTime(index, 0.75, { toleranceSeconds: 0.08 })).toBe(1);
+    expect(getPracticeStepIndexAtTime(index, 1.02, { toleranceSeconds: 0.08 })).toBe(1);
+    expect(getPracticeStepIndexAtTime(index, 1.6, { toleranceSeconds: 0.08 })).toBeNull();
+  });
+
+  it('throws on invalid toleranceSeconds', () => {
+    const index = createPracticeStepIndex([]);
+
+    expect(() => getPracticeStepIndexAtTime(index, 0, { toleranceSeconds: Number.NaN })).toThrow();
+    expect(() => getPracticeStepIndexAtTime(index, 0, { toleranceSeconds: -1 })).toThrow();
   });
 });

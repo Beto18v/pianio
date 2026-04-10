@@ -9,6 +9,7 @@ export interface PracticeStepIndex {
 }
 
 export const DEFAULT_PRACTICE_STEP_EPSILON_SECONDS = 0.04;
+export const DEFAULT_PRACTICE_STEP_TIME_TOLERANCE_SECONDS = 0.08;
 
 export function createPracticeStepIndex(
   notes: ReadonlyArray<NoteEvent>,
@@ -114,6 +115,54 @@ export function getExpectedPitchesAtTime(index: PracticeStepIndex, currentTime: 
   }
 
   return Array.from(expected).sort((left, right) => left - right);
+}
+
+export function getPracticeStepIndexAtTime(
+  index: PracticeStepIndex,
+  currentTime: number,
+  {
+    toleranceSeconds = DEFAULT_PRACTICE_STEP_TIME_TOLERANCE_SECONDS,
+  }: { toleranceSeconds?: number } = {},
+): number | null {
+  if (!Number.isFinite(toleranceSeconds) || toleranceSeconds < 0) {
+    throw new Error('Practice step toleranceSeconds must be a number greater than or equal to 0.');
+  }
+
+  const steps = index.steps;
+
+  if (steps.length === 0) {
+    return null;
+  }
+
+  if (!Number.isFinite(currentTime)) {
+    return 0;
+  }
+
+  const lastStep = steps.at(-1);
+
+  if (lastStep && currentTime > lastStep.maxEndTime + toleranceSeconds) {
+    return null;
+  }
+
+  const candidateIndex = upperBound(index.startTimes, currentTime) - 1;
+
+  if (candidateIndex < 0) {
+    return 0;
+  }
+
+  const candidateStep = steps[candidateIndex];
+
+  if (!candidateStep) {
+    return 0;
+  }
+
+  if (currentTime <= candidateStep.maxEndTime + toleranceSeconds) {
+    return candidateIndex;
+  }
+
+  const nextIndex = candidateIndex + 1;
+
+  return nextIndex < steps.length ? nextIndex : null;
 }
 
 function isValidPracticeNote(note: NoteEvent): boolean {
