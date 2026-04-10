@@ -1,21 +1,32 @@
 <section class="upload-panel" aria-labelledby="midi-upload-title">
-  <header class="upload-panel__header">
-    <p class="upload-panel__eyebrow">{{ site.upload.eyebrow }}</p>
-    <h2 id="midi-upload-title">{{ site.upload.heading }}</h2>
-    <p class="upload-panel__description">{{ site.upload.description }}</p>
-  </header>
+  <h2 id="midi-upload-title" class="upload-panel__sr-only">{{ site.upload.heading }}</h2>
 
   <div class="upload-panel__controls">
-    <label class="upload-panel__label" for="midi-file-input">{{ site.upload.inputLabel }}</label>
     <input
+      #midiFileInput
       id="midi-file-input"
-      class="upload-panel__input"
+      class="upload-panel__input upload-panel__input--hidden"
       type="file"
       accept=".mid,.midi,audio/midi,audio/x-midi"
       [disabled]="isLoading()"
       (change)="onFileSelected($event)"
     />
-    <p class="upload-panel__helper">{{ site.upload.helperText }}</p>
+
+    <button
+      class="upload-panel__choose-button"
+      type="button"
+      [disabled]="isLoading()"
+      (click)="openFilePicker(midiFileInput)"
+    >
+      {{ site.upload.inputLabel }}
+    </button>
+
+    <details class="upload-panel__hint">
+      <summary class="upload-panel__hint-trigger" aria-label="Informacion de archivo">
+        <ng-icon class="upload-panel__hint-icon" name="heroQuestionMarkCircle"></ng-icon>
+      </summary>
+      <p id="midi-upload-hint" class="upload-panel__hint-content">{{ site.upload.helperText }}</p>
+    </details>
 
     @if (selectedFileName()) {
       <p class="upload-panel__selected-file">Archivo actual: {{ selectedFileName() }}</p>
@@ -68,39 +79,6 @@
           <dd>{{ parsedSong.ppq }}</dd>
         </div>
       </dl>
-
-      <div class="upload-panel__notes">
-        <h3>{{ site.upload.notePreviewHeading }}</h3>
-
-        @if (previewNotes().length > 0) {
-          <div class="upload-panel__table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th scope="col">Pitch</th>
-                  <th scope="col">Start</th>
-                  <th scope="col">Duration</th>
-                  <th scope="col">Velocity</th>
-                  <th scope="col">Track</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (note of previewNotes(); track note.track + '-' + note.startTime + '-' + note.pitch) {
-                  <tr>
-                    <td>{{ note.pitch }}</td>
-                    <td>{{ note.startTime | number: '1.0-3' }} s</td>
-                    <td>{{ note.duration | number: '1.0-3' }} s</td>
-                    <td>{{ note.velocity | number: '1.0-3' }}</td>
-                    <td>{{ note.track }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        } @else {
-          <p class="upload-panel__status">{{ site.upload.emptyNotes }}</p>
-        }
-      </div>
     </section>
   } @else if (!isLoading() && !errorMessage()) {
     <p class="upload-panel__status">{{ site.upload.idleState }}</p>

@@ -17,8 +17,8 @@ export const siteContent = {
     heading: 'Archivo MIDI',
     description:
       'Todo el procesamiento se hace en el navegador. Selecciona un archivo para revisar su estructura base.',
-    inputLabel: 'Seleccionar archivo MIDI',
-    helperText: 'La salida muestra un resumen del archivo y las primeras 10 notas parseadas.',
+    inputLabel: 'Choose file',
+    helperText: 'Sube un archivo .mid o .midi para habilitar visualizacion y practica.',
     idleState: 'Todavia no hay ningun archivo cargado.',
     loadingState: 'Procesando archivo...',
     errorState: 'No fue posible leer o parsear el archivo seleccionado.',

@@ -31,8 +31,12 @@ describe('MidiUploadComponent', () => {
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
+    const hintTrigger = compiled.querySelector('.upload-panel__hint-trigger');
 
+    expect(compiled.textContent).toContain('Choose file');
+    expect(compiled.textContent).toContain('Sube un archivo .mid o .midi');
     expect(compiled.textContent).toContain('Todavia no hay ningun archivo cargado.');
+    expect(hintTrigger).not.toBeNull();
   });
 
   it('reads the selected file and renders the parsed summary', async () => {
@@ -73,6 +77,8 @@ describe('MidiUploadComponent', () => {
     expect(compiled.textContent).toContain('Resumen parseado');
     expect(compiled.textContent).toContain('scale.mid');
     expect(compiled.textContent).toContain('120');
+    expect(compiled.textContent).not.toContain('Primeras notas');
+    expect(compiled.querySelector('table')).toBeNull();
     expect(emissions).toEqual([null, parsedSong]);
   });
 

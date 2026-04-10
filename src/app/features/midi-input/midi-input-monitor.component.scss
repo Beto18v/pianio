@@ -1,121 +1,66 @@
 :host {
-  display: block;
+  display: flex;
+  justify-content: flex-end;
 }
 
-.midi-input-panel {
+.midi-input-badge {
   display: grid;
-  gap: 1.25rem;
-  padding: 1.5rem;
+  gap: 0.55rem;
+  min-width: 16rem;
+  padding: 0.85rem 1rem;
   border: 1px solid #c8d8d1;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #ffffff;
 }
 
-.midi-input-panel__header {
-  display: grid;
-  gap: 0.5rem;
-}
-
-.midi-input-panel__eyebrow {
+.midi-input-badge__label {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
   color: #2f6f5e;
 }
 
-.midi-input-panel__description,
-.midi-input-panel__status {
-  margin: 0;
-  color: #355046;
-  line-height: 1.5;
-}
-
-.midi-input-panel__actions {
+.midi-input-badge__device-list {
+  list-style: none;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.midi-input-panel__button {
-  border: 1px solid #2f6f5e;
-  border-radius: 999px;
-  padding: 0.45rem 0.9rem;
-  background: #2f6f5e;
-  color: #ffffff;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.midi-input-panel__button--secondary {
-  border-color: #4b6474;
-  background: #f2f7fa;
-  color: #264355;
-}
-
-.midi-input-panel__summary,
-.midi-input-panel__event {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
-  gap: 0.75rem;
-  margin: 0;
-}
-
-.midi-input-panel__summary div,
-.midi-input-panel__event div {
-  display: grid;
-  gap: 0.2rem;
-}
-
-.midi-input-panel__summary dt,
-.midi-input-panel__event dt {
-  font-size: 0.875rem;
-  color: #547266;
-}
-
-.midi-input-panel__summary dd,
-.midi-input-panel__event dd {
-  margin: 0;
-  font-weight: 600;
-  color: #18211d;
-}
-
-.midi-input-panel__device-list {
-  list-style: none;
-  display: grid;
-  gap: 0.5rem;
+  gap: 0.45rem;
   margin: 0;
   padding: 0;
 }
 
-.midi-input-panel__device-item {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.6rem 0.8rem;
-  border: 1px solid #d7e3dd;
-  border-radius: 8px;
-  background: #f8fbf9;
+.midi-input-badge__device {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.22rem 0.55rem;
+  border: 1px solid #cce2d8;
+  border-radius: 999px;
+  background: #f0f8f4;
+  color: #204236;
+  font-size: 0.88rem;
+  font-weight: 600;
 }
 
-.midi-input-panel__device-item small {
-  color: #4f6860;
-}
-
-.midi-input-panel__status {
-  padding: 0.875rem 1rem;
-  border-radius: 8px;
-  background: #edf5f1;
-}
-
-h2 {
+.midi-input-badge__status {
   margin: 0;
-  color: #18211d;
+  color: #355046;
+  line-height: 1.4;
+}
+
+.midi-input-badge__hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #5a6f66;
 }
 
 @media (max-width: 640px) {
-  .midi-input-panel {
-    padding: 1rem;
+  :host {
+    justify-content: stretch;
+  }
+
+  .midi-input-badge {
+    width: 100%;
+    min-width: 0;
   }
 }

@@ -1,5 +1,7 @@
 import { DecimalPipe } from '@angular/common';
-import { Component, computed, inject, output, signal } from '@angular/core';
+import { Component, inject, output, signal } from '@angular/core';
+import { NgIconComponent, provideIcons } from '@ng-icons/core';
+import { heroQuestionMarkCircle } from '@ng-icons/heroicons/outline';
 
 import { siteContent } from '../../core/site';
 import { MidiSong } from '../../domain/models/midi-song.model';
@@ -7,7 +9,8 @@ import { MidiParserService } from '../../services/midi-parser.service';
 
 @Component({
   selector: 'app-midi-upload',
-  imports: [DecimalPipe],
+  imports: [DecimalPipe, NgIconComponent],
+  viewProviders: [provideIcons({ heroQuestionMarkCircle })],
   templateUrl: './midi-upload.component.html',
   styleUrl: './midi-upload.component.scss',
 })
@@ -19,9 +22,12 @@ export class MidiUploadComponent {
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly song = signal<MidiSong | null>(null);
   protected readonly selectedFileName = signal<string | null>(null);
-  protected readonly previewNotes = computed(() => this.song()?.notes.slice(0, 10) ?? []);
 
   private readonly midiParserService = inject(MidiParserService);
+
+  protected openFilePicker(input: HTMLInputElement): void {
+    input.click();
+  }
 
   protected async onFileSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement | null;

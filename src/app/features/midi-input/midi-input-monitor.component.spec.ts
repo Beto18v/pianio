@@ -9,23 +9,17 @@ describe('MidiInputMonitorComponent', () => {
     }).compileComponents();
   });
 
-  it('shows mock mode by default and allows simulating note events', async () => {
+  it('shows detected devices in compact mode without manual refresh controls', async () => {
     const fixture = TestBed.createComponent(MidiInputMonitorComponent);
     await fixture.whenStable();
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const simulateButton = compiled.querySelector(
-      '#midi-input-simulate-button',
-    ) as HTMLButtonElement | null;
+    const refreshButton = compiled.querySelector('button');
 
-    expect(compiled.textContent).toContain('Entrada MIDI en vivo');
-    expect(compiled.textContent).toContain('Modo simulado');
-    expect(simulateButton).not.toBeNull();
-
-    simulateButton?.click();
-    fixture.detectChanges();
-
-    expect(compiled.textContent).toContain('Note On');
+    expect(compiled.textContent).toContain('Dispositivos');
+    expect(compiled.textContent).toContain('Teclado virtual');
+    expect(compiled.textContent).toContain('Web MIDI API no esta disponible en este navegador.');
+    expect(refreshButton).toBeNull();
   });
 });
