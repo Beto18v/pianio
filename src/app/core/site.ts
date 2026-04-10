@@ -8,6 +8,7 @@ export const siteContent = {
     'Parsing en frontend con @tonejs/midi',
     'Resumen tecnico para verificacion rapida',
     'Base visual para teclado y notas',
+    'Transporte base de playback con estado de tiempo',
   ],
   upload: {
     eyebrow: 'Entrada local',
@@ -53,6 +54,28 @@ export const siteContent = {
         visibleNotes: 'Bloques visibles',
         hiddenNotes: 'Fuera de rango',
       },
+    },
+  },
+  playback: {
+    eyebrow: 'Playback',
+    heading: 'Controles de reproduccion',
+    description:
+      'Transporte base para validar estado, tiempo actual y acciones minimas antes de sumar audio o practica.',
+    idleState: 'Carga un archivo MIDI para habilitar el transporte base.',
+    actions: {
+      play: 'Play',
+      pause: 'Pause',
+      stop: 'Stop',
+    },
+    states: {
+      playing: 'Reproduciendo',
+      paused: 'En pausa',
+    },
+    fields: {
+      currentTime: 'Tiempo actual',
+      duration: 'Duracion',
+      status: 'Estado',
+      position: 'Posicion',
     },
   },
 } as const;

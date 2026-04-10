@@ -45,6 +45,7 @@ describe('App', () => {
       'Carga un archivo MIDI y revisa su estructura en pantalla.',
     );
     expect(compiled.querySelector('app-midi-upload')).not.toBeNull();
+    expect(compiled.querySelector('app-playback-controls')).not.toBeNull();
     expect(compiled.querySelector('app-piano-keyboard')).not.toBeNull();
     expect(compiled.querySelector('app-note-roll')).not.toBeNull();
   });
@@ -80,9 +81,14 @@ describe('App', () => {
     fixture.detectChanges();
 
     const noteRollNotes = compiled.querySelectorAll('.note-roll-panel__note');
+    const playbackPosition = compiled.querySelector(
+      '#playback-position-input',
+    ) as HTMLInputElement | null;
 
     expect(compiled.textContent).toContain('Mapa de notas');
     expect(compiled.textContent).toContain('Bloques visibles');
+    expect(compiled.textContent).toContain('Controles de reproduccion');
+    expect(playbackPosition?.max).toBe('0.5');
     expect(noteRollNotes).toHaveLength(1);
   });
 });

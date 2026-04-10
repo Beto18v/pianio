@@ -1,0 +1,72 @@
+<section class="playback-panel" aria-labelledby="playback-controls-title">
+  <header class="playback-panel__header">
+    <p class="playback-panel__eyebrow">{{ site.playback.eyebrow }}</p>
+    <h2 id="playback-controls-title">{{ site.playback.heading }}</h2>
+    <p class="playback-panel__description">{{ site.playback.description }}</p>
+  </header>
+
+  @if (song()) {
+    <dl class="playback-panel__summary">
+      <div>
+        <dt>{{ site.playback.fields.currentTime }}</dt>
+        <dd>{{ playbackState().currentTime | number: '1.0-2' }} s</dd>
+      </div>
+      <div>
+        <dt>{{ site.playback.fields.duration }}</dt>
+        <dd>{{ playbackState().duration | number: '1.0-2' }} s</dd>
+      </div>
+      <div>
+        <dt>{{ site.playback.fields.status }}</dt>
+        <dd>
+          {{
+            playbackState().isPlaying ? site.playback.states.playing : site.playback.states.paused
+          }}
+        </dd>
+      </div>
+    </dl>
+
+    <div class="playback-panel__actions">
+      <button
+        class="playback-panel__button"
+        type="button"
+        (click)="play()"
+        [disabled]="!canPlay() || playbackState().isPlaying"
+      >
+        {{ site.playback.actions.play }}
+      </button>
+      <button
+        class="playback-panel__button"
+        type="button"
+        (click)="pause()"
+        [disabled]="!playbackState().isPlaying"
+      >
+        {{ site.playback.actions.pause }}
+      </button>
+      <button
+        class="playback-panel__button"
+        type="button"
+        (click)="stop()"
+        [disabled]="isStopDisabled()"
+      >
+        {{ site.playback.actions.stop }}
+      </button>
+    </div>
+
+    <label class="playback-panel__seek" for="playback-position-input">
+      <span>{{ site.playback.fields.position }}</span>
+      <input
+        id="playback-position-input"
+        class="playback-panel__slider"
+        type="range"
+        min="0"
+        [max]="playbackState().duration"
+        step="0.01"
+        [value]="playbackState().currentTime"
+        [disabled]="!canPlay()"
+        (input)="onSeek($event)"
+      />
+    </label>
+  } @else {
+    <p class="playback-panel__status">{{ site.playback.idleState }}</p>
+  }
+</section>
