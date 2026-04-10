@@ -1,0 +1,78 @@
+<section class="midi-input-panel" aria-labelledby="midi-input-title">
+  <header class="midi-input-panel__header">
+    <p class="midi-input-panel__eyebrow">{{ site.midiInput.eyebrow }}</p>
+    <h2 id="midi-input-title">{{ site.midiInput.heading }}</h2>
+    <p class="midi-input-panel__description">{{ site.midiInput.description }}</p>
+  </header>
+
+  <div class="midi-input-panel__actions">
+    <button class="midi-input-panel__button" type="button" (click)="refreshDevices()">
+      {{ site.midiInput.actions.refresh }}
+    </button>
+    @if (isMockMode()) {
+      <button
+        id="midi-input-simulate-button"
+        class="midi-input-panel__button midi-input-panel__button--secondary"
+        type="button"
+        (click)="triggerMockNote()"
+      >
+        {{ site.midiInput.actions.simulate }}
+      </button>
+    }
+  </div>
+
+  <dl class="midi-input-panel__summary">
+    <div>
+      <dt>{{ site.midiInput.fields.state }}</dt>
+      <dd>{{ statusLabel() }}</dd>
+    </div>
+    <div>
+      <dt>{{ site.midiInput.fields.devices }}</dt>
+      <dd>{{ devices().length }}</dd>
+    </div>
+  </dl>
+
+  @if (errorMessage(); as message) {
+    <p class="midi-input-panel__status">{{ message }}</p>
+  }
+
+  @if (devices().length > 0) {
+    <ul class="midi-input-panel__device-list" aria-label="Dispositivos MIDI detectados">
+      @for (device of devices(); track device.id) {
+        <li class="midi-input-panel__device-item">
+          <span>{{ device.name }}</span>
+          <small>
+            @if (device.manufacturer) {
+              {{ device.manufacturer }}
+            } @else {
+              {{ site.midiInput.unknownManufacturer }}
+            }
+          </small>
+        </li>
+      }
+    </ul>
+  }
+
+  @if (formattedEvent(); as event) {
+    <dl class="midi-input-panel__event">
+      <div>
+        <dt>{{ site.midiInput.fields.event }}</dt>
+        <dd>{{ event.typeLabel }}</dd>
+      </div>
+      <div>
+        <dt>{{ site.midiInput.fields.note }}</dt>
+        <dd>{{ event.noteLabel }} ({{ event.pitch }})</dd>
+      </div>
+      <div>
+        <dt>{{ site.midiInput.fields.velocity }}</dt>
+        <dd>{{ event.velocity | number: '1.0-2' }}</dd>
+      </div>
+      <div>
+        <dt>{{ site.midiInput.fields.source }}</dt>
+        <dd>{{ event.deviceName }}</dd>
+      </div>
+    </dl>
+  } @else {
+    <p class="midi-input-panel__status">{{ site.midiInput.noEventState }}</p>
+  }
+</section>

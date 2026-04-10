@@ -9,6 +9,7 @@ export const siteContent = {
     'Resumen tecnico para verificacion rapida',
     'Base visual para teclado y notas',
     'Transporte base de playback con tiempo y audio minimo',
+    'Deteccion de dispositivos MIDI con fallback simulado',
   ],
   upload: {
     eyebrow: 'Entrada local',
@@ -76,6 +77,35 @@ export const siteContent = {
       duration: 'Duracion',
       status: 'Estado',
       position: 'Posicion',
+    },
+  },
+  midiInput: {
+    eyebrow: 'MIDI Input',
+    heading: 'Entrada MIDI en vivo',
+    description:
+      'Detecta teclados reales con Web MIDI API y permite simulacion defensiva cuando no hay hardware disponible.',
+    unknownManufacturer: 'Fabricante no disponible',
+    noEventState: 'Aun no se recibieron eventos noteOn/noteOff.',
+    actions: {
+      refresh: 'Buscar dispositivos',
+      simulate: 'Simular nota',
+    },
+    states: {
+      idle: 'Pendiente de inicializacion',
+      ready: 'Dispositivos detectados',
+      mock: 'Modo simulado',
+    },
+    eventTypes: {
+      noteOn: 'Note On',
+      noteOff: 'Note Off',
+    },
+    fields: {
+      state: 'Estado',
+      devices: 'Dispositivos',
+      event: 'Evento',
+      note: 'Nota',
+      velocity: 'Velocidad',
+      source: 'Fuente',
     },
   },
 } as const;

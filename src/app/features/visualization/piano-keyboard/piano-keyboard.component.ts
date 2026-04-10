@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, input } from '@angular/core';
 
 import { siteContent } from '../../../core/site';
 import { MVP_KEYBOARD_LAYOUT } from '../utils/keyboard-layout.util';
@@ -9,6 +9,8 @@ import { MVP_KEYBOARD_LAYOUT } from '../utils/keyboard-layout.util';
   styleUrl: './piano-keyboard.component.scss',
 })
 export class PianoKeyboardComponent {
+  readonly activePitches = input<ReadonlySet<number>>(new Set<number>());
+
   protected readonly site = siteContent;
   protected readonly layout = MVP_KEYBOARD_LAYOUT;
   protected readonly whiteKeys = this.layout.keys.filter((key) => !key.isBlack);

@@ -46,6 +46,7 @@ describe('App', () => {
     );
     expect(compiled.querySelector('app-midi-upload')).not.toBeNull();
     expect(compiled.querySelector('app-playback-controls')).not.toBeNull();
+    expect(compiled.querySelector('app-midi-input-monitor')).not.toBeNull();
     expect(compiled.querySelector('app-piano-keyboard')).not.toBeNull();
     expect(compiled.querySelector('app-note-roll')).not.toBeNull();
   });

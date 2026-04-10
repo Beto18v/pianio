@@ -17,7 +17,8 @@
 
     <app-midi-upload (songParsed)="onSongParsed($event)" />
     <app-playback-controls />
-    <app-piano-keyboard />
+    <app-midi-input-monitor />
+    <app-piano-keyboard [activePitches]="activeInputPitches()" />
     <app-note-roll [song]="currentSong()" [currentTime]="playbackState().currentTime" />
   </div>
 </main>

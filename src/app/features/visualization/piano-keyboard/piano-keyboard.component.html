@@ -33,7 +33,11 @@
     >
       <div class="keyboard-panel__white-keys" aria-hidden="true">
         @for (key of whiteKeys; track key.pitch) {
-          <div class="keyboard-panel__key keyboard-panel__key--white" [attr.data-pitch]="key.pitch">
+          <div
+            class="keyboard-panel__key keyboard-panel__key--white"
+            [class.keyboard-panel__key--active-white]="activePitches().has(key.pitch)"
+            [attr.data-pitch]="key.pitch"
+          >
             @if (labeledWhiteKeyPitches.has(key.pitch)) {
               <span class="keyboard-panel__key-label">{{ key.label }}</span>
             }
@@ -45,6 +49,7 @@
         @for (key of blackKeys; track key.pitch) {
           <div
             class="keyboard-panel__key keyboard-panel__key--black"
+            [class.keyboard-panel__key--active-black]="activePitches().has(key.pitch)"
             [attr.data-pitch]="key.pitch"
             [style.left.%]="(key.leftOffsetUnits / layout.totalWidthUnits) * 100"
             [style.width.%]="(key.widthUnits / layout.totalWidthUnits) * 100"
