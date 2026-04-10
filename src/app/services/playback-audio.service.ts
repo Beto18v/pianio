@@ -181,7 +181,10 @@ function getActiveNotes(notes: ReadonlyArray<NoteEvent>, currentTime: number): I
   return notes
     .map((note, index) => ({ index, note }))
     .filter(({ note }) => isNoteActive(note, currentTime))
-    .sort((left, right) => normalizeVelocity(right.note.velocity) - normalizeVelocity(left.note.velocity))
+    .sort(
+      (left, right) =>
+        normalizeVelocity(right.note.velocity) - normalizeVelocity(left.note.velocity),
+    )
     .slice(0, MAX_POLYPHONY);
 }
 

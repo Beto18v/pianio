@@ -28,7 +28,10 @@ describe('PlaybackAudioService', () => {
       'requestAnimationFrame',
       vi.fn(() => 1),
     );
-    vi.stubGlobal('cancelAnimationFrame', vi.fn(() => undefined));
+    vi.stubGlobal(
+      'cancelAnimationFrame',
+      vi.fn(() => undefined),
+    );
 
     TestBed.configureTestingModule({});
     playbackService = TestBed.inject(PlaybackService);
