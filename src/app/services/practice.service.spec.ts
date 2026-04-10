@@ -25,6 +25,14 @@ describe('PracticeService', () => {
 
   beforeEach(async () => {
     deleteNavigatorRequestMIDIAccess();
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      vi.fn(() => 1),
+    );
+    vi.stubGlobal(
+      'cancelAnimationFrame',
+      vi.fn(() => undefined),
+    );
 
     TestBed.configureTestingModule({});
 
@@ -37,6 +45,7 @@ describe('PracticeService', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
     deleteNavigatorRequestMIDIAccess();
   });
 
@@ -81,6 +90,45 @@ describe('PracticeService', () => {
     expect(state.isMatch).toBe(false);
     expect(state.lastPlayedNote?.type).toBe('noteOff');
     expect(state.lastPlayedNote?.pitch).toBe(60);
+  });
+
+  it('blocks playback start in practice mode when there is no match', () => {
+    playbackService.setSong(song);
+    playbackService.seek(0.1);
+
+    const playSpy = vi.spyOn(playbackService, 'play');
+
+    practiceService.setPracticeModeEnabled(true);
+    practiceService.requestPlay();
+    TestBed.flushEffects();
+
+    expect(practiceService.shouldBlockPlayback()).toBe(true);
+    expect(playSpy).not.toHaveBeenCalled();
+    expect(playbackService.playbackState().isPlaying).toBe(false);
+  });
+
+  it('resumes playback on match and pauses again when match is lost', () => {
+    playbackService.setSong(song);
+    playbackService.seek(0.1);
+
+    const playSpy = vi.spyOn(playbackService, 'play');
+    const pauseSpy = vi.spyOn(playbackService, 'pause');
+
+    practiceService.setPracticeModeEnabled(true);
+    practiceService.requestPlay();
+    TestBed.flushEffects();
+
+    midiInputService.triggerMockNote();
+    TestBed.flushEffects();
+
+    expect(playSpy).toHaveBeenCalled();
+    expect(playbackService.playbackState().isPlaying).toBe(true);
+
+    midiInputService.triggerMockNote();
+    TestBed.flushEffects();
+
+    expect(pauseSpy).toHaveBeenCalled();
+    expect(playbackService.playbackState().isPlaying).toBe(false);
   });
 });
 

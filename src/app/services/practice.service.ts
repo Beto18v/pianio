@@ -1,4 +1,4 @@
-import { Injectable, computed, inject } from '@angular/core';
+import { Injectable, computed, effect, inject, signal } from '@angular/core';
 
 import { NoteEvent } from '../domain/models/note-event.model';
 import { PracticeState } from '../domain/models/practice-state.model';
@@ -12,6 +12,8 @@ import { PlaybackService } from './playback.service';
 export class PracticeService {
   private readonly playbackService = inject(PlaybackService);
   private readonly midiInputService = inject(MidiInputService);
+  private readonly practiceModeEnabledState = signal(false);
+  private readonly playIntentState = signal(false);
 
   readonly state = computed<PracticeState>(() => {
     const song = this.playbackService.song();
@@ -34,6 +36,74 @@ export class PracticeService {
   readonly activeInputPitches = computed(() => this.state().activeInputPitches);
   readonly isMatch = computed(() => this.state().isMatch);
   readonly lastPlayedNote = computed(() => this.state().lastPlayedNote);
+  readonly isPracticeModeEnabled = this.practiceModeEnabledState.asReadonly();
+  readonly playIntent = this.playIntentState.asReadonly();
+  readonly shouldBlockPlayback = computed(
+    () => this.isPracticeModeEnabled() && this.expectedPitches().length > 0 && !this.isMatch(),
+  );
+
+  constructor() {
+    effect(() => {
+      const isPracticeModeEnabled = this.isPracticeModeEnabled();
+      const playIntent = this.playIntent();
+      const shouldBlockPlayback = this.shouldBlockPlayback();
+      const playbackState = this.playbackService.playbackState();
+      const canPlay = this.playbackService.canPlay();
+
+      if (!isPracticeModeEnabled || !playIntent || !canPlay) {
+        return;
+      }
+
+      if (shouldBlockPlayback && playbackState.isPlaying) {
+        this.playbackService.pause();
+        return;
+      }
+
+      if (!shouldBlockPlayback && !playbackState.isPlaying) {
+        this.playbackService.play();
+      }
+    });
+  }
+
+  setPracticeModeEnabled(enabled: boolean): void {
+    this.practiceModeEnabledState.set(enabled);
+    this.syncPlaybackWithPracticeGate();
+  }
+
+  requestPlay(): void {
+    this.playIntentState.set(true);
+    this.syncPlaybackWithPracticeGate();
+  }
+
+  requestPause(): void {
+    this.playIntentState.set(false);
+    this.playbackService.pause();
+  }
+
+  requestStop(): void {
+    this.playIntentState.set(false);
+    this.playbackService.stop();
+  }
+
+  private syncPlaybackWithPracticeGate(): void {
+    if (!this.playIntent() || !this.playbackService.canPlay()) {
+      return;
+    }
+
+    const playbackState = this.playbackService.playbackState();
+
+    if (this.shouldBlockPlayback()) {
+      if (playbackState.isPlaying) {
+        this.playbackService.pause();
+      }
+
+      return;
+    }
+
+    if (!playbackState.isPlaying) {
+      this.playbackService.play();
+    }
+  }
 }
 
 function getExpectedPitchesAtTime(notes: ReadonlyArray<NoteEvent>, currentTime: number): number[] {

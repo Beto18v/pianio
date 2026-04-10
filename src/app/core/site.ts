@@ -10,6 +10,7 @@ export const siteContent = {
     'Base visual para teclado y notas',
     'Transporte base de playback con tiempo y audio minimo',
     'Deteccion de dispositivos MIDI con fallback simulado',
+    'Modo practica base con match visible y gate de avance',
   ],
   upload: {
     eyebrow: 'Entrada local',
@@ -71,6 +72,21 @@ export const siteContent = {
     states: {
       playing: 'Reproduciendo',
       paused: 'En pausa',
+    },
+    practice: {
+      toggle: 'Activar modo practica',
+      emptyPitches: '-',
+      blockedStatus: 'El transporte queda en pausa hasta que el input coincida con las notas esperadas.',
+      states: {
+        disabled: 'Desactivado',
+        match: 'Match',
+        blocked: 'Esperando match',
+      },
+      fields: {
+        matchStatus: 'Estado practica',
+        expected: 'Esperadas',
+        activeInput: 'Input activo',
+      },
     },
     fields: {
       currentTime: 'Tiempo actual',

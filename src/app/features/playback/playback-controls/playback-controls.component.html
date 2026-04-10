@@ -6,6 +6,18 @@
   </header>
 
   @if (song()) {
+    <label class="playback-panel__practice-toggle" for="practice-mode-toggle-input">
+      <input
+        id="practice-mode-toggle-input"
+        class="playback-panel__practice-checkbox"
+        type="checkbox"
+        [checked]="isPracticeModeEnabled()"
+        [disabled]="!hasSong()"
+        (change)="onPracticeModeToggle($event)"
+      />
+      <span>{{ site.playback.practice.toggle }}</span>
+    </label>
+
     <dl class="playback-panel__summary">
       <div>
         <dt>{{ site.playback.fields.currentTime }}</dt>
@@ -24,6 +36,27 @@
         </dd>
       </div>
     </dl>
+
+    @if (isPracticeModeEnabled()) {
+      <dl class="playback-panel__practice-summary">
+        <div>
+          <dt>{{ site.playback.practice.fields.matchStatus }}</dt>
+          <dd>{{ practiceMatchStatus() }}</dd>
+        </div>
+        <div>
+          <dt>{{ site.playback.practice.fields.expected }}</dt>
+          <dd>{{ formatPitchList(practiceState().expectedPitches) }}</dd>
+        </div>
+        <div>
+          <dt>{{ site.playback.practice.fields.activeInput }}</dt>
+          <dd>{{ formatPitchList(practiceState().activeInputPitches) }}</dd>
+        </div>
+      </dl>
+
+      @if (shouldBlockPlayback()) {
+        <p class="playback-panel__practice-status">{{ site.playback.practice.blockedStatus }}</p>
+      }
+    }
 
     <div class="playback-panel__actions">
       <button
