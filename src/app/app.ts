@@ -10,7 +10,12 @@ import { PlaybackService } from './services/playback.service';
 
 @Component({
   selector: 'app-root',
-  imports: [MidiUploadComponent, PlaybackControlsComponent, PianoKeyboardComponent, NoteRollComponent],
+  imports: [
+    MidiUploadComponent,
+    PlaybackControlsComponent,
+    PianoKeyboardComponent,
+    NoteRollComponent,
+  ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })

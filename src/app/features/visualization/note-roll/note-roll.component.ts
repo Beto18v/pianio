@@ -7,10 +7,7 @@ import { NoteRollLayout } from '../models/note-roll-layout.model';
 import { PositionedNote } from '../models/positioned-note.model';
 import { KeyboardKey } from '../models/keyboard-key.model';
 import { MVP_KEYBOARD_LAYOUT } from '../utils/keyboard-layout.util';
-import {
-  DEFAULT_NOTE_ROLL_LAYOUT_CONFIG,
-  createNoteRollLayout,
-} from '../utils/note-position.util';
+import { DEFAULT_NOTE_ROLL_LAYOUT_CONFIG, createNoteRollLayout } from '../utils/note-position.util';
 
 @Component({
   selector: 'app-note-roll',

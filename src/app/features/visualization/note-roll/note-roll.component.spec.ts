@@ -81,7 +81,9 @@ describe('NoteRollComponent', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
     const playhead = compiled.querySelector('.note-roll-panel__playhead') as HTMLElement | null;
-    const c4 = compiled.querySelector('.note-roll-panel__note[data-pitch="60"]') as HTMLElement | null;
+    const c4 = compiled.querySelector(
+      '.note-roll-panel__note[data-pitch="60"]',
+    ) as HTMLElement | null;
     const cSharp4 = compiled.querySelector(
       '.note-roll-panel__note[data-pitch="61"]',
     ) as HTMLElement | null;

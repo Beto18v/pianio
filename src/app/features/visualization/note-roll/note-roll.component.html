@@ -31,7 +31,11 @@
             [style.height.px]="layout.totalHeightPx"
             [style.--white-key-count]="keyboardLayout.whiteKeyCount"
           >
-            <div class="note-roll-panel__playhead" aria-hidden="true" [style.top.px]="playheadTopPx()"></div>
+            <div
+              class="note-roll-panel__playhead"
+              aria-hidden="true"
+              [style.top.px]="playheadTopPx()"
+            ></div>
 
             <div class="note-roll-panel__lanes" aria-hidden="true">
               @for (key of laneKeys; track key.pitch) {
