@@ -57,8 +57,25 @@ describe('PracticeService', () => {
 
     expect(state.expectedPitches).toEqual([]);
     expect(state.activeInputPitches).toEqual([]);
+    expect(state.matchedPitches).toEqual([]);
+    expect(state.missingPitches).toEqual([]);
+    expect(state.extraInputPitches).toEqual([]);
     expect(state.isMatch).toBe(false);
+    expect(state.isPracticeModeEnabled).toBe(false);
+    expect(state.waitModeStatus).toBe('disabled');
+    expect(state.isWaitingForMatch).toBe(false);
     expect(state.lastPlayedNote).toBeNull();
+  });
+
+  it('keeps wait mode in idle state until play is requested', () => {
+    playbackService.setSong(song);
+    playbackService.seek(0.1);
+
+    practiceService.setPracticeModeEnabled(true);
+    TestBed.flushEffects();
+
+    expect(practiceService.waitModeStatus()).toBe('idle');
+    expect(practiceService.isWaitingForMatch()).toBe(false);
   });
 
   it('reports a match when expected pitch is currently active from midi input', () => {
@@ -71,6 +88,9 @@ describe('PracticeService', () => {
 
     expect(state.expectedPitches).toEqual([60]);
     expect(state.activeInputPitches).toEqual([60]);
+    expect(state.matchedPitches).toEqual([60]);
+    expect(state.missingPitches).toEqual([]);
+    expect(state.extraInputPitches).toEqual([]);
     expect(state.isMatch).toBe(true);
     expect(state.lastPlayedNote?.type).toBe('noteOn');
     expect(state.lastPlayedNote?.pitch).toBe(60);
@@ -87,9 +107,30 @@ describe('PracticeService', () => {
 
     expect(state.expectedPitches).toEqual([60]);
     expect(state.activeInputPitches).toEqual([]);
+    expect(state.matchedPitches).toEqual([]);
+    expect(state.missingPitches).toEqual([60]);
+    expect(state.extraInputPitches).toEqual([]);
     expect(state.isMatch).toBe(false);
     expect(state.lastPlayedNote?.type).toBe('noteOff');
     expect(state.lastPlayedNote?.pitch).toBe(60);
+  });
+
+  it('reports missing and extra pitches when current input differs from expected notes', () => {
+    playbackService.setSong(song);
+    playbackService.seek(0.1);
+
+    midiInputService.triggerMockNote();
+    midiInputService.triggerMockNote();
+    midiInputService.triggerMockNote();
+
+    const state = practiceService.state();
+
+    expect(state.expectedPitches).toEqual([60]);
+    expect(state.activeInputPitches).toEqual([62]);
+    expect(state.matchedPitches).toEqual([]);
+    expect(state.missingPitches).toEqual([60]);
+    expect(state.extraInputPitches).toEqual([62]);
+    expect(state.isMatch).toBe(false);
   });
 
   it('blocks playback start in practice mode when there is no match', () => {
@@ -103,6 +144,8 @@ describe('PracticeService', () => {
     TestBed.flushEffects();
 
     expect(practiceService.shouldBlockPlayback()).toBe(true);
+    expect(practiceService.waitModeStatus()).toBe('waiting');
+    expect(practiceService.isWaitingForMatch()).toBe(true);
     expect(playSpy).not.toHaveBeenCalled();
     expect(playbackService.playbackState().isPlaying).toBe(false);
   });
@@ -118,17 +161,42 @@ describe('PracticeService', () => {
     practiceService.requestPlay();
     TestBed.flushEffects();
 
+    expect(practiceService.waitModeStatus()).toBe('waiting');
+
     midiInputService.triggerMockNote();
     TestBed.flushEffects();
 
+    expect(practiceService.waitModeStatus()).toBe('advancing');
     expect(playSpy).toHaveBeenCalled();
     expect(playbackService.playbackState().isPlaying).toBe(true);
 
     midiInputService.triggerMockNote();
     TestBed.flushEffects();
 
+    expect(practiceService.waitModeStatus()).toBe('waiting');
     expect(pauseSpy).toHaveBeenCalled();
     expect(playbackService.playbackState().isPlaying).toBe(false);
+  });
+
+  it('keeps transport advancing when practice mode is disabled with active play intent', () => {
+    playbackService.setSong(song);
+    playbackService.seek(0.1);
+
+    const playSpy = vi.spyOn(playbackService, 'play');
+
+    practiceService.setPracticeModeEnabled(true);
+    practiceService.requestPlay();
+    TestBed.flushEffects();
+
+    expect(practiceService.waitModeStatus()).toBe('waiting');
+    expect(playbackService.playbackState().isPlaying).toBe(false);
+
+    practiceService.setPracticeModeEnabled(false);
+    TestBed.flushEffects();
+
+    expect(practiceService.waitModeStatus()).toBe('disabled');
+    expect(playSpy).toHaveBeenCalled();
+    expect(playbackService.playbackState().isPlaying).toBe(true);
   });
 });
 

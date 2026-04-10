@@ -23,7 +23,11 @@ export class PlaybackControlsComponent {
   protected readonly canPlay = this.playbackService.canPlay;
   protected readonly practiceState = this.practiceService.state;
   protected readonly isPracticeModeEnabled = this.practiceService.isPracticeModeEnabled;
+  protected readonly waitModeStatus = this.practiceService.waitModeStatus;
   protected readonly shouldBlockPlayback = this.practiceService.shouldBlockPlayback;
+  protected readonly hasExtraInputPitches = computed(
+    () => this.practiceState().extraInputPitches.length > 0,
+  );
   protected readonly practiceMatchStatus = computed(() => {
     if (!this.isPracticeModeEnabled()) {
       return this.site.playback.practice.states.disabled;
@@ -33,7 +37,26 @@ export class PlaybackControlsComponent {
       return this.site.playback.practice.states.blocked;
     }
 
+    if (this.hasExtraInputPitches()) {
+      return this.site.playback.practice.states.matchWithExtra;
+    }
+
     return this.site.playback.practice.states.match;
+  });
+  protected readonly practiceWaitModeStatus = computed(() => {
+    const waitModeStatus = this.waitModeStatus();
+
+    switch (waitModeStatus) {
+      case 'idle':
+        return this.site.playback.practice.waitModeStates.idle;
+      case 'waiting':
+        return this.site.playback.practice.waitModeStates.waiting;
+      case 'advancing':
+        return this.site.playback.practice.waitModeStates.advancing;
+      case 'disabled':
+      default:
+        return this.site.playback.practice.waitModeStates.disabled;
+    }
   });
   protected readonly isStopDisabled = computed(() => {
     const playbackState = this.playbackState();

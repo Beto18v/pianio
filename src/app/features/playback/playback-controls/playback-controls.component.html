@@ -44,12 +44,44 @@
           <dd>{{ practiceMatchStatus() }}</dd>
         </div>
         <div>
+          <dt>{{ site.playback.practice.fields.waitMode }}</dt>
+          <dd>{{ practiceWaitModeStatus() }}</dd>
+        </div>
+        <div>
           <dt>{{ site.playback.practice.fields.expected }}</dt>
           <dd>{{ formatPitchList(practiceState().expectedPitches) }}</dd>
         </div>
         <div>
           <dt>{{ site.playback.practice.fields.activeInput }}</dt>
           <dd>{{ formatPitchList(practiceState().activeInputPitches) }}</dd>
+        </div>
+        <div>
+          <dt>{{ site.playback.practice.fields.matched }}</dt>
+          <dd class="playback-panel__practice-value playback-panel__practice-value--positive">
+            {{ formatPitchList(practiceState().matchedPitches) }}
+          </dd>
+        </div>
+        <div>
+          <dt>{{ site.playback.practice.fields.missing }}</dt>
+          <dd
+            class="playback-panel__practice-value"
+            [class.playback-panel__practice-value--warning]="
+              practiceState().missingPitches.length > 0
+            "
+          >
+            {{ formatPitchList(practiceState().missingPitches) }}
+          </dd>
+        </div>
+        <div>
+          <dt>{{ site.playback.practice.fields.extra }}</dt>
+          <dd
+            class="playback-panel__practice-value"
+            [class.playback-panel__practice-value--caution]="
+              practiceState().extraInputPitches.length > 0
+            "
+          >
+            {{ formatPitchList(practiceState().extraInputPitches) }}
+          </dd>
         </div>
       </dl>
 

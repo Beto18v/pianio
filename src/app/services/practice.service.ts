@@ -1,10 +1,19 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
 
 import { NoteEvent } from '../domain/models/note-event.model';
-import { PracticeState } from '../domain/models/practice-state.model';
+import { PracticeState, PracticeWaitModeStatus } from '../domain/models/practice-state.model';
 import { UserPlayedNote } from '../domain/models/user-played-note.model';
 import { MidiInputService } from './midi-input.service';
 import { PlaybackService } from './playback.service';
+
+type PracticeTransportMode = 'idle' | 'waiting' | 'advancing';
+
+interface PracticePitchEvaluation {
+  matchedPitches: number[];
+  missingPitches: number[];
+  extraInputPitches: number[];
+  isMatch: boolean;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -22,57 +31,74 @@ export class PracticeService {
     const expectedPitches = song
       ? getExpectedPitchesAtTime(song.notes, playbackState.currentTime)
       : [];
+    const pitchEvaluation = evaluatePracticePitches(expectedPitches, activeInputPitches);
+    const isPracticeModeEnabled = this.practiceModeEnabledState();
+    const playIntent = this.playIntentState();
+    const canPlay = this.playbackService.canPlay();
+    const waitModeStatus = resolveWaitModeStatus({
+      isPracticeModeEnabled,
+      playIntent,
+      canPlay,
+      missingPitchCount: pitchEvaluation.missingPitches.length,
+      isMatch: pitchEvaluation.isMatch,
+    });
 
     return {
       currentTime: playbackState.currentTime,
       expectedPitches,
       activeInputPitches,
-      isMatch: isMatch(expectedPitches, activeInputPitches),
+      matchedPitches: pitchEvaluation.matchedPitches,
+      missingPitches: pitchEvaluation.missingPitches,
+      extraInputPitches: pitchEvaluation.extraInputPitches,
+      isMatch: pitchEvaluation.isMatch,
+      isPracticeModeEnabled,
+      waitModeStatus,
+      isWaitingForMatch: waitModeStatus === 'waiting',
       lastPlayedNote: toUserPlayedNote(this.midiInputService.lastEvent()),
     };
   });
 
   readonly expectedPitches = computed(() => this.state().expectedPitches);
   readonly activeInputPitches = computed(() => this.state().activeInputPitches);
+  readonly matchedPitches = computed(() => this.state().matchedPitches);
+  readonly missingPitches = computed(() => this.state().missingPitches);
+  readonly extraInputPitches = computed(() => this.state().extraInputPitches);
   readonly isMatch = computed(() => this.state().isMatch);
   readonly lastPlayedNote = computed(() => this.state().lastPlayedNote);
   readonly isPracticeModeEnabled = this.practiceModeEnabledState.asReadonly();
   readonly playIntent = this.playIntentState.asReadonly();
-  readonly shouldBlockPlayback = computed(
-    () => this.isPracticeModeEnabled() && this.expectedPitches().length > 0 && !this.isMatch(),
-  );
+  readonly waitModeStatus = computed(() => this.state().waitModeStatus);
+  readonly isWaitingForMatch = computed(() => this.state().isWaitingForMatch);
+  readonly shouldBlockPlayback = computed(() => this.isWaitingForMatch());
+
+  private readonly transportMode = computed<PracticeTransportMode>(() => {
+    if (!this.playIntent() || !this.playbackService.canPlay()) {
+      return 'idle';
+    }
+
+    if (!this.isPracticeModeEnabled()) {
+      return 'advancing';
+    }
+
+    return this.isWaitingForMatch() ? 'waiting' : 'advancing';
+  });
 
   constructor() {
     effect(() => {
-      const isPracticeModeEnabled = this.isPracticeModeEnabled();
-      const playIntent = this.playIntent();
-      const shouldBlockPlayback = this.shouldBlockPlayback();
       const playbackState = this.playbackService.playbackState();
-      const canPlay = this.playbackService.canPlay();
 
-      if (!isPracticeModeEnabled || !playIntent || !canPlay) {
-        return;
-      }
-
-      if (shouldBlockPlayback && playbackState.isPlaying) {
-        this.playbackService.pause();
-        return;
-      }
-
-      if (!shouldBlockPlayback && !playbackState.isPlaying) {
-        this.playbackService.play();
-      }
+      this.syncTransportWithWaitMode(playbackState.isPlaying);
     });
   }
 
   setPracticeModeEnabled(enabled: boolean): void {
     this.practiceModeEnabledState.set(enabled);
-    this.syncPlaybackWithPracticeGate();
+    this.syncTransportWithWaitMode(this.playbackService.playbackState().isPlaying);
   }
 
   requestPlay(): void {
     this.playIntentState.set(true);
-    this.syncPlaybackWithPracticeGate();
+    this.syncTransportWithWaitMode(this.playbackService.playbackState().isPlaying);
   }
 
   requestPause(): void {
@@ -85,25 +111,72 @@ export class PracticeService {
     this.playbackService.stop();
   }
 
-  private syncPlaybackWithPracticeGate(): void {
-    if (!this.playIntent() || !this.playbackService.canPlay()) {
+  private syncTransportWithWaitMode(isPlaying: boolean): void {
+    const transportMode = this.transportMode();
+
+    if (transportMode === 'idle') {
       return;
     }
 
-    const playbackState = this.playbackService.playbackState();
-
-    if (this.shouldBlockPlayback()) {
-      if (playbackState.isPlaying) {
+    if (transportMode === 'waiting') {
+      if (isPlaying) {
         this.playbackService.pause();
       }
 
       return;
     }
 
-    if (!playbackState.isPlaying) {
+    if (!isPlaying) {
       this.playbackService.play();
     }
   }
+}
+
+function resolveWaitModeStatus({
+  isPracticeModeEnabled,
+  playIntent,
+  canPlay,
+  missingPitchCount,
+  isMatch,
+}: {
+  isPracticeModeEnabled: boolean;
+  playIntent: boolean;
+  canPlay: boolean;
+  missingPitchCount: number;
+  isMatch: boolean;
+}): PracticeWaitModeStatus {
+  if (!isPracticeModeEnabled) {
+    return 'disabled';
+  }
+
+  if (!playIntent || !canPlay) {
+    return 'idle';
+  }
+
+  if (missingPitchCount > 0 && !isMatch) {
+    return 'waiting';
+  }
+
+  return 'advancing';
+}
+
+function evaluatePracticePitches(
+  expectedPitches: ReadonlyArray<number>,
+  activeInputPitches: ReadonlyArray<number>,
+): PracticePitchEvaluation {
+  const expectedSet = new Set(expectedPitches);
+  const activeSet = new Set(activeInputPitches);
+  const matchedPitches = expectedPitches.filter((pitch) => activeSet.has(pitch));
+  const missingPitches = expectedPitches.filter((pitch) => !activeSet.has(pitch));
+  const extraInputPitches = activeInputPitches.filter((pitch) => !expectedSet.has(pitch));
+  const isMatch = expectedPitches.length > 0 && missingPitches.length === 0;
+
+  return {
+    matchedPitches,
+    missingPitches,
+    extraInputPitches,
+    isMatch,
+  };
 }
 
 function getExpectedPitchesAtTime(notes: ReadonlyArray<NoteEvent>, currentTime: number): number[] {
@@ -135,19 +208,6 @@ function toSortedPitches(pitches: ReadonlySet<number>): number[] {
   return Array.from(pitches)
     .filter((pitch): pitch is number => Number.isInteger(pitch) && pitch >= 0 && pitch <= 127)
     .sort((left, right) => left - right);
-}
-
-function isMatch(
-  expectedPitches: ReadonlyArray<number>,
-  activeInputPitches: ReadonlyArray<number>,
-): boolean {
-  if (expectedPitches.length === 0) {
-    return false;
-  }
-
-  const activeSet = new Set(activeInputPitches);
-
-  return expectedPitches.every((pitch) => activeSet.has(pitch));
 }
 
 function toUserPlayedNote(

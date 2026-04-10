@@ -92,6 +92,34 @@
   color: #18211d;
 }
 
+.playback-panel__practice-value {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid #d0ddd7;
+  background: #f5faf7;
+}
+
+.playback-panel__practice-value--positive {
+  border-color: #8bc6a8;
+  background: #ecf9f0;
+  color: #1f5d3b;
+}
+
+.playback-panel__practice-value--warning {
+  border-color: #e9b06a;
+  background: #fff4e2;
+  color: #7a4a14;
+}
+
+.playback-panel__practice-value--caution {
+  border-color: #d7c26d;
+  background: #fff9dd;
+  color: #6d5915;
+}
+
 .playback-panel__practice-status {
   margin: 0;
   padding: 0.75rem 0.9rem;

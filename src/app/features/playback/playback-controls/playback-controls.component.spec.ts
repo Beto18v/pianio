@@ -108,6 +108,10 @@ describe('PlaybackControlsComponent', () => {
 
     expect(playbackService.playbackState().isPlaying).toBe(false);
     expect(compiled.textContent).toContain('Esperando match');
+    expect(compiled.textContent).toContain('En espera (wait mode)');
+    expect(compiled.textContent).toContain('Faltantes');
+    expect(compiled.textContent).toContain('Aciertos');
+    expect(compiled.textContent).toContain('Input extra');
 
     midiInputService.triggerMockNote();
     TestBed.flushEffects();
@@ -116,6 +120,8 @@ describe('PlaybackControlsComponent', () => {
     expect(playSpy).toHaveBeenCalled();
     expect(playbackService.playbackState().isPlaying).toBe(true);
     expect(compiled.textContent).toContain('Match');
+    expect(compiled.textContent).toContain('Avanzando');
+    expect(compiled.textContent).toContain('Aciertos');
 
     midiInputService.triggerMockNote();
     TestBed.flushEffects();
