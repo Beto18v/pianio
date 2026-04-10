@@ -1,141 +1,109 @@
 :host {
   display: block;
-}
-
-.keyboard-panel {
-  display: grid;
-  gap: 1.25rem;
-  padding: 1.5rem;
-  border: 1px solid #c8d8d1;
-  border-radius: 8px;
-  background: #ffffff;
-}
-
-.keyboard-panel__header {
-  display: grid;
-  gap: 0.5rem;
-}
-
-.keyboard-panel__eyebrow {
-  margin: 0;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: #2f6f5e;
-}
-
-.keyboard-panel__description {
-  margin: 0;
-  color: #355046;
-  line-height: 1.5;
-}
-
-.keyboard-panel__summary {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
-  gap: 1rem;
-  margin: 0;
-}
-
-.keyboard-panel__summary div {
-  display: grid;
-  gap: 0.25rem;
-}
-
-.keyboard-panel__summary dt {
-  font-size: 0.875rem;
-  color: #547266;
-}
-
-.keyboard-panel__summary dd {
-  margin: 0;
-  font-weight: 600;
-  color: #18211d;
-}
-
-.keyboard-panel__viewport {
-  overflow-x: auto;
-  padding-bottom: 0.25rem;
-}
-
-.keyboard-panel__keyboard {
-  --white-key-count: 52;
-  position: relative;
-  min-width: max(100%, calc(var(--white-key-count) * 1.2rem));
-  height: clamp(9rem, 20vw, 12rem);
-  border: 1px solid #d7e3dd;
-  border-radius: 8px;
-  background: #f8fbf9;
-}
-
-.keyboard-panel__white-keys {
-  display: grid;
-  grid-template-columns: repeat(var(--white-key-count), minmax(0, 1fr));
   height: 100%;
 }
 
-.keyboard-panel__black-keys {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
+.stage-keyboard {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-top: 1px solid rgb(255 255 255 / 0.08);
+  background:
+    linear-gradient(180deg, rgb(7 12 12 / 0) 0%, rgb(7 12 12 / 0.35) 18%, rgb(7 12 12 / 0.72) 100%),
+    linear-gradient(180deg, rgb(255 255 255 / 0.08) 0%, rgb(255 255 255 / 0) 28%);
+  box-shadow:
+    inset 0 32px 48px rgb(0 0 0 / 0.28),
+    inset 0 -18px 24px rgb(0 0 0 / 0.42);
 }
 
-.keyboard-panel__key {
+.stage-keyboard__range {
+  position: absolute;
+  top: 0.8rem;
+  left: 1rem;
+  z-index: 4;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: 6px;
+  background: rgb(11 18 17 / 0.46);
+  color: rgb(242 244 236 / 0.9);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  backdrop-filter: blur(10px);
+}
+
+.stage-keyboard__white-keys,
+.stage-keyboard__black-keys {
+  position: absolute;
+  inset: 0;
+}
+
+.stage-keyboard__key {
+  position: absolute;
   box-sizing: border-box;
 }
 
-.keyboard-panel__key--white {
+.stage-keyboard__key--white {
+  top: 0;
+  bottom: 0;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  min-height: 100%;
-  padding: 0.6rem 0.2rem;
-  border-right: 1px solid #d7e3dd;
-  background: linear-gradient(to bottom, #ffffff 0%, #f2f7f4 100%);
+  padding: 0.75rem 0.18rem;
+  border-right: 1px solid rgb(24 34 29 / 0.16);
+  border-bottom: 1px solid rgb(10 17 15 / 0.45);
+  background:
+    linear-gradient(180deg, rgb(252 252 247 / 0.98) 0%, rgb(236 240 232 / 0.96) 74%, rgb(210 216 207 / 0.98) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.22),
+    inset 0 -18px 18px rgb(70 83 77 / 0.18);
 }
 
-.keyboard-panel__white-keys .keyboard-panel__key--white:last-child {
-  border-right: 0;
+.stage-keyboard__key--active-white {
+  background:
+    linear-gradient(180deg, rgb(255 246 211 / 0.98) 0%, rgb(255 224 143 / 0.96) 78%, rgb(241 183 85 / 0.98) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 250 227 / 0.42),
+    inset 0 -18px 18px rgb(198 121 39 / 0.18),
+    0 0 18px rgb(255 213 120 / 0.2);
 }
 
-.keyboard-panel__key--active-white {
-  background: linear-gradient(to bottom, #fff7da 0%, #ffd780 100%);
-  box-shadow: inset 0 0 0 1px rgb(207 142 43 / 0.45);
-}
-
-.keyboard-panel__key--black {
-  position: absolute;
+.stage-keyboard__key--black {
   top: 0;
   height: 62%;
-  border: 1px solid #101814;
+  border: 1px solid rgb(6 12 12 / 0.94);
   border-radius: 0 0 6px 6px;
-  background: linear-gradient(to bottom, #33453f 0%, #1b2723 100%);
-  box-shadow: 0 0.25rem 0.4rem rgb(16 24 20 / 0.14);
+  background:
+    linear-gradient(180deg, rgb(63 77 73 / 0.98) 0%, rgb(22 29 27 / 0.98) 88%);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.06),
+    0 10px 14px rgb(0 0 0 / 0.32);
 }
 
-.keyboard-panel__key--active-black {
-  background: linear-gradient(to bottom, #699e89 0%, #2f6f5e 100%);
-  box-shadow: 0 0.28rem 0.5rem rgb(47 111 94 / 0.35);
+.stage-keyboard__key--active-black {
+  background:
+    linear-gradient(180deg, rgb(110 154 141 / 0.98) 0%, rgb(34 75 65 / 0.98) 88%);
+  box-shadow:
+    inset 0 0 0 1px rgb(214 251 236 / 0.12),
+    0 12px 18px rgb(11 21 17 / 0.34),
+    0 0 16px rgb(104 210 181 / 0.18);
 }
 
-.keyboard-panel__key-label {
+.stage-keyboard__key-label {
+  color: rgb(72 86 79 / 0.88);
   font-size: 0.72rem;
   font-weight: 600;
-  color: #4a635a;
   white-space: nowrap;
 }
 
-h2 {
-  margin: 0;
-  color: #18211d;
-}
-
-@media (max-width: 640px) {
-  .keyboard-panel {
-    padding: 1rem;
+@media (max-width: 720px) {
+  .stage-keyboard__range {
+    top: 0.65rem;
+    left: 0.75rem;
   }
 
-  .keyboard-panel__keyboard {
-    min-width: max(100%, calc(var(--white-key-count) * 1.1rem));
+  .stage-keyboard__key-label {
+    font-size: 0.68rem;
   }
 }

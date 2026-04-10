@@ -31,12 +31,13 @@ describe('MidiUploadComponent', () => {
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const hintTrigger = compiled.querySelector('.upload-panel__hint-trigger');
 
-    expect(compiled.textContent).toContain('Choose file');
+    expect(compiled.textContent).toContain('Cargar MIDI');
     expect(compiled.textContent).toContain('Sube un archivo .mid o .midi');
-    expect(compiled.textContent).toContain('Todavia no hay ningun archivo cargado.');
-    expect(hintTrigger).not.toBeNull();
+    expect(compiled.textContent).toContain('Aun no hay un archivo cargado.');
+    expect(compiled.querySelector('.upload-panel__helper')?.textContent).toContain(
+      'Sube un archivo .mid o .midi',
+    );
   });
 
   it('reads the selected file and renders the parsed summary', async () => {

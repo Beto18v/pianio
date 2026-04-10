@@ -1,5 +1,21 @@
-<section class="upload-panel" aria-labelledby="midi-upload-title">
-  <h2 id="midi-upload-title" class="upload-panel__sr-only">{{ site.upload.heading }}</h2>
+<section
+  class="upload-panel"
+  [class.upload-panel--compact]="compact()"
+  [attr.aria-labelledby]="compact() ? null : 'midi-upload-title'"
+  [attr.aria-label]="compact() ? site.upload.heading : null"
+>
+  @if (!compact()) {
+    <header class="upload-panel__header">
+      <div>
+        <p class="upload-panel__eyebrow">{{ site.upload.eyebrow }}</p>
+        <h2 id="midi-upload-title">{{ site.upload.heading }}</h2>
+      </div>
+
+      @if (selectedFileName()) {
+        <p class="upload-panel__selected-file">Archivo actual: {{ selectedFileName() }}</p>
+      }
+    </header>
+  }
 
   <div class="upload-panel__controls">
     <input
@@ -20,20 +36,13 @@
     >
       {{ site.upload.inputLabel }}
     </button>
-
-    <details class="upload-panel__hint">
-      <summary class="upload-panel__hint-trigger" aria-label="Informacion de archivo">
-        <ng-icon class="upload-panel__hint-icon" name="heroQuestionMarkCircle"></ng-icon>
-      </summary>
-      <p id="midi-upload-hint" class="upload-panel__hint-content">{{ site.upload.helperText }}</p>
-    </details>
-
-    @if (selectedFileName()) {
-      <p class="upload-panel__selected-file">Archivo actual: {{ selectedFileName() }}</p>
-    }
   </div>
 
-  @if (isLoading()) {
+  @if (!compact()) {
+    <p class="upload-panel__helper">{{ site.upload.helperText }}</p>
+  }
+
+  @if (!compact() && isLoading()) {
     <p class="upload-panel__status">{{ site.upload.loadingState }}</p>
   }
 
@@ -43,44 +52,46 @@
     </p>
   }
 
-  @if (song(); as parsedSong) {
-    <section class="upload-panel__result" aria-labelledby="midi-summary-title">
-      <h3 id="midi-summary-title">{{ site.upload.summaryHeading }}</h3>
+  @if (!compact()) {
+    @if (song(); as parsedSong) {
+      <section class="upload-panel__result" aria-labelledby="midi-summary-title">
+        <h3 id="midi-summary-title">{{ site.upload.summaryHeading }}</h3>
 
-      <dl class="upload-panel__summary">
-        <div>
-          <dt>{{ site.upload.fields.fileName }}</dt>
-          <dd>{{ parsedSong.fileName }}</dd>
-        </div>
-        <div>
-          <dt>{{ site.upload.fields.duration }}</dt>
-          <dd>{{ parsedSong.duration | number: '1.0-3' }} s</dd>
-        </div>
-        <div>
-          <dt>{{ site.upload.fields.trackCount }}</dt>
-          <dd>{{ parsedSong.trackCount }}</dd>
-        </div>
-        <div>
-          <dt>{{ site.upload.fields.noteCount }}</dt>
-          <dd>{{ parsedSong.notes.length }}</dd>
-        </div>
-        <div>
-          <dt>{{ site.upload.fields.tempo }}</dt>
-          <dd>
-            @if (parsedSong.tempoBpm !== null) {
-              {{ parsedSong.tempoBpm | number: '1.0-2' }} BPM
-            } @else {
-              No disponible
-            }
-          </dd>
-        </div>
-        <div>
-          <dt>{{ site.upload.fields.ppq }}</dt>
-          <dd>{{ parsedSong.ppq }}</dd>
-        </div>
-      </dl>
-    </section>
-  } @else if (!isLoading() && !errorMessage()) {
-    <p class="upload-panel__status">{{ site.upload.idleState }}</p>
+        <dl class="upload-panel__summary">
+          <div class="upload-panel__summary-item upload-panel__summary-item--primary">
+            <dt>{{ site.upload.fields.fileName }}</dt>
+            <dd>{{ parsedSong.fileName }}</dd>
+          </div>
+          <div class="upload-panel__summary-item upload-panel__summary-item--primary">
+            <dt>{{ site.upload.fields.duration }}</dt>
+            <dd>{{ parsedSong.duration | number: '1.0-3' }} s</dd>
+          </div>
+          <div class="upload-panel__summary-item upload-panel__summary-item--primary">
+            <dt>{{ site.upload.fields.tempo }}</dt>
+            <dd>
+              @if (parsedSong.tempoBpm !== null) {
+                {{ parsedSong.tempoBpm | number: '1.0-2' }} BPM
+              } @else {
+                No disponible
+              }
+            </dd>
+          </div>
+          <div class="upload-panel__summary-item upload-panel__summary-item--primary">
+            <dt>{{ site.upload.fields.noteCount }}</dt>
+            <dd>{{ parsedSong.notes.length }}</dd>
+          </div>
+          <div class="upload-panel__summary-item">
+            <dt>{{ site.upload.fields.trackCount }}</dt>
+            <dd>{{ parsedSong.trackCount }}</dd>
+          </div>
+          <div class="upload-panel__summary-item">
+            <dt>{{ site.upload.fields.ppq }}</dt>
+            <dd>{{ parsedSong.ppq }}</dd>
+          </div>
+        </dl>
+      </section>
+    } @else if (!isLoading() && !errorMessage()) {
+      <p class="upload-panel__status">{{ site.upload.idleState }}</p>
+    }
   }
 </section>

@@ -1,18 +1,180 @@
 <main class="app-shell">
-  <div class="app-shell__inner">
-    <header class="app-shell__header">
-      <h1>{{ site.appName }}</h1>
-      <p class="app-shell__description">{{ site.heading }}</p>
-      <p class="app-shell__supporting-copy">{{ site.description }}</p>
-    </header>
-
-    <section class="app-shell__top-controls" aria-label="Controles de entrada MIDI">
-      <app-midi-upload (songParsed)="onSongParsed($event)" />
-      <app-midi-input-monitor />
+  @if (flowStep() !== 'main') {
+    <section class="onboarding-backdrop" aria-hidden="true">
+      <div class="onboarding-backdrop__ambient"></div>
+      <div class="onboarding-backdrop__keyboard">
+        <app-piano-keyboard [layout]="keyboardLayout()" [activePitches]="activeInputPitches()" />
+      </div>
     </section>
+  }
 
-    <app-playback-controls />
-    <app-piano-keyboard [activePitches]="activeInputPitches()" />
-    <app-note-roll [song]="currentSong()" [currentTime]="playbackState().currentTime" />
-  </div>
+  @if (flowStep() === 'welcome') {
+    <section class="onboarding-screen onboarding-screen--welcome" aria-labelledby="welcome-title">
+      <article class="welcome-card">
+        <p class="welcome-card__eyebrow">{{ site.welcome.eyebrow }}</p>
+        <h1 id="welcome-title">{{ site.welcome.title }}</h1>
+        <p class="welcome-card__summary">{{ site.welcome.summary }}</p>
+        <p class="welcome-card__description">{{ site.welcome.description }}</p>
+
+        <ul class="welcome-card__list">
+          @for (highlight of site.welcome.highlights; track highlight) {
+            <li>{{ highlight }}</li>
+          }
+        </ul>
+
+        <div class="welcome-card__actions">
+          <button
+            id="welcome-continue-button"
+            class="flow-button"
+            type="button"
+            (click)="goToCalibration()"
+          >
+            {{ site.flow.actions.continue }}
+          </button>
+        </div>
+      </article>
+    </section>
+  } @else if (flowStep() === 'calibration') {
+    <section
+      class="onboarding-screen onboarding-screen--calibration"
+      aria-labelledby="calibration-screen-title"
+    >
+      <article class="calibration-screen">
+        <header class="calibration-screen__header">
+          <p class="calibration-screen__eyebrow">{{ site.calibration.heading }}</p>
+          <h1 id="calibration-screen-title">{{ site.calibration.readyTitle }}</h1>
+          <p class="calibration-screen__description">{{ site.calibration.readyDescription }}</p>
+
+          <p class="calibration-screen__connection">{{ calibrationConnectionLabel() }}</p>
+        </header>
+
+        <dl class="calibration-screen__summary">
+          <div>
+            <dt>{{ site.calibration.fields.firstKey }}</dt>
+            <dd>{{ firstCalibrationLabel() ?? keyboardCalibrationState().range.firstLabel }}</dd>
+          </div>
+          <div>
+            <dt>{{ site.calibration.fields.lastKey }}</dt>
+            <dd>{{ lastCalibrationLabel() ?? keyboardCalibrationState().range.lastLabel }}</dd>
+          </div>
+          <div>
+            <dt>{{ site.calibration.fields.range }}</dt>
+            <dd>
+              {{ keyboardCalibrationState().range.firstLabel }} -
+              {{ keyboardCalibrationState().range.lastLabel }}
+            </dd>
+          </div>
+          <div>
+            <dt>{{ site.calibration.fields.source }}</dt>
+            <dd>{{ calibrationSourceLabel() }}</dd>
+          </div>
+          <div>
+            <dt>{{ site.calibration.fields.mappingStatus }}</dt>
+            <dd>{{ calibrationMappingStatusLabel() }}</dd>
+          </div>
+        </dl>
+
+        <section class="calibration-screen__mapping" aria-labelledby="calibration-mapping-title">
+          <h2 id="calibration-mapping-title">{{ site.calibration.mapping.heading }}</h2>
+          <p class="calibration-screen__mapping-status">{{ calibrationMappingStatusLabel() }}</p>
+          <p class="calibration-screen__mapping-hint">{{ calibrationMappingHint() }}</p>
+        </section>
+
+        @if (calibrationErrorMessage(); as errorMessage) {
+          <p class="calibration-screen__error" role="alert">{{ errorMessage }}</p>
+        }
+
+        <div class="calibration-screen__actions">
+          <button
+            id="calibration-back-button"
+            class="flow-button flow-button--ghost"
+            type="button"
+            (click)="goToWelcome()"
+          >
+            {{ site.flow.actions.back }}
+          </button>
+
+          @if (isMappingInProgress()) {
+            <button
+              id="calibration-retry-button"
+              class="flow-button"
+              type="button"
+              (click)="retryCalibration()"
+            >
+              {{ site.calibration.actions.retry }}
+            </button>
+          } @else {
+            <button
+              id="calibration-start-button"
+              class="flow-button"
+              type="button"
+              (click)="startCalibration()"
+              [disabled]="connectionState() !== 'ready'"
+            >
+              {{ site.calibration.actions.start }}
+            </button>
+          }
+
+          <button
+            id="calibration-fallback-button"
+            class="flow-button flow-button--ghost"
+            type="button"
+            (click)="useFallbackRange()"
+          >
+            {{ site.calibration.actions.useFallback }}
+          </button>
+
+          @if (canEnterMainScene()) {
+            <button
+              id="calibration-confirm-button"
+              class="flow-button"
+              type="button"
+              (click)="confirmCalibration()"
+            >
+              {{ site.flow.actions.enterMainScene }}
+            </button>
+          }
+        </div>
+      </article>
+    </section>
+  } @else {
+    <section class="immersive-shell" aria-label="Escena principal de PianoFlow">
+      <div class="immersive-shell__stage">
+        <div class="immersive-shell__intro">
+          <header class="immersive-shell__brand">
+            <p class="immersive-shell__eyebrow">{{ site.appName }}</p>
+          </header>
+
+          <div class="immersive-shell__topbar">
+            <app-midi-upload [compact]="true" (songParsed)="onSongParsed($event)" />
+            <app-midi-input-monitor [compact]="true" />
+          </div>
+        </div>
+
+        <div class="immersive-shell__visuals">
+          <app-note-rain
+            class="immersive-shell__note-rain"
+            [song]="currentSong()"
+            [currentTime]="playbackState().currentTime"
+            [keyboardLayout]="keyboardLayout()"
+          />
+
+          @if (!currentSong()) {
+            <section class="immersive-shell__empty-state" aria-live="polite">
+              <h2>{{ site.stage.idleTitle }}</h2>
+              <p>{{ site.stage.idleDescription }}</p>
+            </section>
+          }
+        </div>
+
+        <aside class="immersive-shell__hud">
+          <app-playback-controls />
+        </aside>
+
+        <div class="immersive-shell__keyboard">
+          <app-piano-keyboard [layout]="keyboardLayout()" [activePitches]="activeInputPitches()" />
+        </div>
+      </div>
+    </section>
+  }
 </main>

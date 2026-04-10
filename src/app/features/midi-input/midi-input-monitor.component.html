@@ -1,17 +1,22 @@
-<section class="midi-input-badge" aria-label="Dispositivos MIDI detectados">
-  <p class="midi-input-badge__label">{{ site.midiInput.fields.devices }}</p>
+<section
+  class="midi-input-badge"
+  [class.midi-input-badge--compact]="compact()"
+  aria-label="Dispositivos MIDI detectados"
+>
+  @if (!compact()) {
+    <p class="midi-input-badge__label">{{ site.midiInput.fields.devices }}</p>
+  }
 
-  @if (deviceNames().length > 0) {
-    <ul class="midi-input-badge__device-list" aria-label="Lista de dispositivos MIDI detectados">
-      @for (deviceName of deviceNames(); track deviceName) {
-        <li class="midi-input-badge__device">{{ deviceName }}</li>
-      }
-    </ul>
+  @if (primaryDeviceName(); as deviceName) {
+    @if (!compact()) {
+      <p class="midi-input-badge__status">{{ statusLabel() }}</p>
+    }
+    <p class="midi-input-badge__device">{{ deviceName }}</p>
   } @else {
     <p class="midi-input-badge__status">{{ statusLabel() }}</p>
   }
 
-  @if (errorMessage(); as message) {
+  @if (!compact() && errorMessage(); as message) {
     <p class="midi-input-badge__hint">{{ message }}</p>
   }
 </section>

@@ -33,25 +33,63 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
-  it('should render the app heading and visualization components', async () => {
+  it('shows the welcome screen first', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
 
-    expect(compiled.querySelector('h1')?.textContent).toContain('PianoFlow');
-    expect(compiled.textContent).toContain(
-      'Carga un archivo MIDI y revisa su estructura en pantalla.',
-    );
+    expect(compiled.textContent).toContain('PianoFlow');
+    expect(compiled.textContent).toContain('PianoFlow en dos pasos.');
+    expect(compiled.querySelector('#welcome-continue-button')).not.toBeNull();
+    expect(compiled.querySelector('app-midi-upload')).toBeNull();
+  });
+
+  it('transitions from welcome to calibration and then to main scene', async () => {
+    const fixture = TestBed.createComponent(App);
+
+    await moveToCalibration(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    expect(compiled.textContent).toContain('Calibracion lista.');
+    expect(compiled.querySelector('#calibration-back-button')).not.toBeNull();
+
+    const confirmButton = compiled.querySelector(
+      '#calibration-confirm-button',
+    ) as HTMLButtonElement | null;
+
+    expect(confirmButton).not.toBeNull();
+    confirmButton?.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
     expect(compiled.querySelector('app-midi-upload')).not.toBeNull();
     expect(compiled.querySelector('app-playback-controls')).not.toBeNull();
     expect(compiled.querySelector('app-midi-input-monitor')).not.toBeNull();
     expect(compiled.querySelector('app-piano-keyboard')).not.toBeNull();
-    expect(compiled.querySelector('app-note-roll')).not.toBeNull();
   });
 
-  it('feeds the parsed MidiSong from upload into the note roll', async () => {
+  it('returns from calibration to welcome when pressing back', async () => {
+    const fixture = TestBed.createComponent(App);
+
+    await moveToCalibration(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const backButton = compiled.querySelector(
+      '#calibration-back-button',
+    ) as HTMLButtonElement | null;
+
+    backButton?.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(compiled.querySelector('#welcome-continue-button')).not.toBeNull();
+    expect(compiled.querySelector('app-midi-upload')).toBeNull();
+  });
+
+  it('feeds the parsed MidiSong from upload after onboarding', async () => {
     const parsedSong: MidiSong = {
       fileName: 'scale.mid',
       notes: [{ pitch: 60, velocity: 0.8, startTime: 0, duration: 0.5, track: 0 }],
@@ -64,9 +102,18 @@ describe('App', () => {
     parserService.parse.mockReturnValue(parsedSong);
 
     const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
+
+    await moveToCalibration(fixture);
 
     const compiled = fixture.nativeElement as HTMLElement;
+    const confirmButton = compiled.querySelector(
+      '#calibration-confirm-button',
+    ) as HTMLButtonElement | null;
+
+    confirmButton?.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
     const input = compiled.querySelector('#midi-file-input') as HTMLInputElement;
     const file = new File([new Uint8Array([77, 84, 104, 100])], 'scale.mid', {
       type: 'audio/midi',
@@ -81,16 +128,15 @@ describe('App', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    const noteRollNotes = compiled.querySelectorAll('.note-roll-panel__note');
+    const noteRainNotes = compiled.querySelectorAll('.note-rain__note');
     const playbackPosition = compiled.querySelector(
       '#playback-position-input',
     ) as HTMLInputElement | null;
 
-    expect(compiled.textContent).toContain('Mapa de notas');
-    expect(compiled.textContent).toContain('Bloques visibles');
-    expect(compiled.textContent).toContain('Controles de reproduccion');
+    expect(compiled.textContent).toContain('HUD de practica');
+    expect(compiled.textContent).toContain('Cargar MIDI');
     expect(playbackPosition?.max).toBe('0.5');
-    expect(noteRollNotes).toHaveLength(1);
+    expect(noteRainNotes).toHaveLength(1);
   });
 });
 
@@ -103,4 +149,23 @@ function createFileList(file: File): FileList {
       yield file;
     },
   } as unknown as FileList;
+}
+
+async function moveToCalibration(fixture: {
+  nativeElement: unknown;
+  detectChanges: () => void;
+  whenStable: () => Promise<unknown>;
+}): Promise<void> {
+  fixture.detectChanges();
+  await fixture.whenStable();
+  fixture.detectChanges();
+
+  const compiled = fixture.nativeElement as HTMLElement;
+  const continueButton = compiled.querySelector(
+    '#welcome-continue-button',
+  ) as HTMLButtonElement | null;
+
+  continueButton?.click();
+  await fixture.whenStable();
+  fixture.detectChanges();
 }

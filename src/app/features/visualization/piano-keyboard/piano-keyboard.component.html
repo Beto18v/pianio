@@ -1,61 +1,31 @@
-<section class="keyboard-panel" aria-labelledby="piano-keyboard-title">
-  <header class="keyboard-panel__header">
-    <p class="keyboard-panel__eyebrow">{{ site.visualization.eyebrow }}</p>
-    <h2 id="piano-keyboard-title">{{ site.visualization.heading }}</h2>
-    <p class="keyboard-panel__description">{{ site.visualization.description }}</p>
-  </header>
+<div class="stage-keyboard" role="img" [attr.aria-label]="keyboardAriaLabel()">
+  <div class="stage-keyboard__range" aria-hidden="true">{{ rangeLabel() }}</div>
 
-  <dl class="keyboard-panel__summary">
-    <div>
-      <dt>{{ site.visualization.fields.range }}</dt>
-      <dd>{{ rangeLabel }}</dd>
-    </div>
-    <div>
-      <dt>{{ site.visualization.fields.totalKeys }}</dt>
-      <dd>{{ layout.keyCount }}</dd>
-    </div>
-    <div>
-      <dt>{{ site.visualization.fields.whiteKeys }}</dt>
-      <dd>{{ layout.whiteKeyCount }}</dd>
-    </div>
-    <div>
-      <dt>{{ site.visualization.fields.blackKeys }}</dt>
-      <dd>{{ blackKeyCount }}</dd>
-    </div>
-  </dl>
-
-  <div class="keyboard-panel__viewport">
-    <div
-      class="keyboard-panel__keyboard"
-      role="img"
-      [attr.aria-label]="keyboardAriaLabel"
-      [style.--white-key-count]="layout.whiteKeyCount"
-    >
-      <div class="keyboard-panel__white-keys" aria-hidden="true">
-        @for (key of whiteKeys; track key.pitch) {
-          <div
-            class="keyboard-panel__key keyboard-panel__key--white"
-            [class.keyboard-panel__key--active-white]="activePitches().has(key.pitch)"
-            [attr.data-pitch]="key.pitch"
-          >
-            @if (labeledWhiteKeyPitches.has(key.pitch)) {
-              <span class="keyboard-panel__key-label">{{ key.label }}</span>
-            }
-          </div>
+  <div class="stage-keyboard__white-keys" aria-hidden="true">
+    @for (key of whiteKeys(); track key.pitch) {
+      <div
+        class="stage-keyboard__key stage-keyboard__key--white"
+        [class.stage-keyboard__key--active-white]="activePitches().has(key.pitch)"
+        [attr.data-pitch]="key.pitch"
+        [style.left]="getKeyStyle(key).left"
+        [style.width]="getKeyStyle(key).width"
+      >
+        @if (labeledWhiteKeyPitches().has(key.pitch)) {
+          <span class="stage-keyboard__key-label">{{ key.label }}</span>
         }
       </div>
-
-      <div class="keyboard-panel__black-keys" aria-hidden="true">
-        @for (key of blackKeys; track key.pitch) {
-          <div
-            class="keyboard-panel__key keyboard-panel__key--black"
-            [class.keyboard-panel__key--active-black]="activePitches().has(key.pitch)"
-            [attr.data-pitch]="key.pitch"
-            [style.left.%]="(key.leftOffsetUnits / layout.totalWidthUnits) * 100"
-            [style.width.%]="(key.widthUnits / layout.totalWidthUnits) * 100"
-          ></div>
-        }
-      </div>
-    </div>
+    }
   </div>
-</section>
+
+  <div class="stage-keyboard__black-keys" aria-hidden="true">
+    @for (key of blackKeys(); track key.pitch) {
+      <div
+        class="stage-keyboard__key stage-keyboard__key--black"
+        [class.stage-keyboard__key--active-black]="activePitches().has(key.pitch)"
+        [attr.data-pitch]="key.pitch"
+        [style.left]="getKeyStyle(key).left"
+        [style.width]="getKeyStyle(key).width"
+      ></div>
+    }
+  </div>
+</div>

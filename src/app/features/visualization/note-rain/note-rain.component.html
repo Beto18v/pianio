@@ -1,0 +1,24 @@
+@if (layout(); as noteRainLayout) {
+  <div class="note-rain" role="img" [attr.aria-label]="accessibleLabel()">
+    <div
+      class="note-rain__hit-line"
+      aria-hidden="true"
+      [style.top.px]="noteRainLayout.hitLineTopPx"
+    ></div>
+
+    <div class="note-rain__notes" aria-hidden="true">
+      @for (note of noteRainLayout.notes; track note.track + '-' + note.startTime + '-' + note.pitch) {
+        <div
+          class="note-rain__note"
+          [class.note-rain__note--black]="note.isBlack"
+          [class.note-rain__note--active]="note.isActive"
+          [style.left.%]="note.leftPercent"
+          [style.width.%]="note.widthPercent"
+          [style.top.px]="note.topPx"
+          [style.height.px]="note.heightPx"
+          [attr.data-pitch]="note.pitch"
+        ></div>
+      }
+    </div>
+  </div>
+}

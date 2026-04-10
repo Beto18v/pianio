@@ -1,7 +1,5 @@
 import { DecimalPipe } from '@angular/common';
-import { Component, inject, output, signal } from '@angular/core';
-import { NgIconComponent, provideIcons } from '@ng-icons/core';
-import { heroQuestionMarkCircle } from '@ng-icons/heroicons/outline';
+import { Component, inject, input, output, signal } from '@angular/core';
 
 import { siteContent } from '../../core/site';
 import { MidiSong } from '../../domain/models/midi-song.model';
@@ -9,12 +7,12 @@ import { MidiParserService } from '../../services/midi-parser.service';
 
 @Component({
   selector: 'app-midi-upload',
-  imports: [DecimalPipe, NgIconComponent],
-  viewProviders: [provideIcons({ heroQuestionMarkCircle })],
+  imports: [DecimalPipe],
   templateUrl: './midi-upload.component.html',
   styleUrl: './midi-upload.component.scss',
 })
 export class MidiUploadComponent {
+  readonly compact = input(false);
   readonly songParsed = output<MidiSong | null>();
 
   protected readonly site = siteContent;

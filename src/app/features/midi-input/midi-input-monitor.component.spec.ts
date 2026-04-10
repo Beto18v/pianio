@@ -9,17 +9,16 @@ describe('MidiInputMonitorComponent', () => {
     }).compileComponents();
   });
 
-  it('shows detected devices in compact mode without manual refresh controls', async () => {
+  it('shows a minimal connected-device badge and diagnostic hint when needed', async () => {
     const fixture = TestBed.createComponent(MidiInputMonitorComponent);
     await fixture.whenStable();
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    const refreshButton = compiled.querySelector('button');
 
     expect(compiled.textContent).toContain('Dispositivos');
-    expect(compiled.textContent).toContain('Teclado virtual');
+    expect(compiled.textContent).toContain('Modo simulado');
     expect(compiled.textContent).toContain('Web MIDI API no esta disponible en este navegador.');
-    expect(refreshButton).toBeNull();
+    expect(compiled.querySelector('button')).toBeNull();
   });
 });

@@ -1,6 +1,6 @@
-import { Component, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 
-import { siteContent } from '../../../core/site';
+import { KeyboardLayout } from '../models/keyboard-layout.model';
 import { MVP_KEYBOARD_LAYOUT } from '../utils/keyboard-layout.util';
 
 @Component({
@@ -9,23 +9,51 @@ import { MVP_KEYBOARD_LAYOUT } from '../utils/keyboard-layout.util';
   styleUrl: './piano-keyboard.component.scss',
 })
 export class PianoKeyboardComponent {
+  readonly layout = input<KeyboardLayout>(MVP_KEYBOARD_LAYOUT);
   readonly activePitches = input<ReadonlySet<number>>(new Set<number>());
 
-  protected readonly site = siteContent;
-  protected readonly layout = MVP_KEYBOARD_LAYOUT;
-  protected readonly whiteKeys = this.layout.keys.filter((key) => !key.isBlack);
-  protected readonly blackKeys = this.layout.keys.filter((key) => key.isBlack);
-  protected readonly rangeLabel = `${this.whiteKeys[0]?.label} - ${this.whiteKeys.at(-1)?.label}`;
-  protected readonly blackKeyCount = this.blackKeys.length;
-  protected readonly keyboardAriaLabel = `Teclado de piano de ${this.layout.keyCount} teclas, desde ${this.whiteKeys[0]?.label} hasta ${this.whiteKeys.at(-1)?.label}.`;
-  protected readonly labeledWhiteKeyPitches = new Set(
-    this.whiteKeys
-      .filter(
-        (key) =>
-          key.pitch === this.layout.startPitch ||
-          key.pitch === this.layout.endPitch ||
-          key.pitchClass === 0,
-      )
-      .map((key) => key.pitch),
+  protected readonly whiteKeys = computed(() => this.layout().keys.filter((key) => !key.isBlack));
+  protected readonly blackKeys = computed(() => this.layout().keys.filter((key) => key.isBlack));
+  protected readonly rangeLabel = computed(() => {
+    const layout = this.layout();
+    const firstKey = layout.keys[0];
+    const lastKey = layout.keys.at(-1);
+
+    return `${firstKey?.label ?? ''} - ${lastKey?.label ?? ''}`;
+  });
+  protected readonly keyboardAriaLabel = computed(() => {
+    const layout = this.layout();
+    const firstKey = layout.keys[0];
+    const lastKey = layout.keys.at(-1);
+
+    return `Teclado de piano de ${layout.keyCount} teclas, desde ${firstKey?.label} hasta ${lastKey?.label}.`;
+  });
+  protected readonly labeledWhiteKeyPitches = computed(
+    () =>
+      new Set(
+        this.whiteKeys()
+          .filter((key) => {
+            const layout = this.layout();
+
+            return (
+              key.pitch === layout.startPitch ||
+              key.pitch === layout.endPitch ||
+              key.pitchClass === 0
+            );
+          })
+          .map((key) => key.pitch),
+      ),
   );
+
+  protected getKeyStyle(key: { leftOffsetUnits: number; widthUnits: number }): {
+    left: string;
+    width: string;
+  } {
+    const layout = this.layout();
+
+    return {
+      left: `${(key.leftOffsetUnits / layout.totalWidthUnits) * 100}%`,
+      width: `${(key.widthUnits / layout.totalWidthUnits) * 100}%`,
+    };
+  }
 }

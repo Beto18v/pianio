@@ -1,52 +1,102 @@
-<section class="playback-panel" aria-labelledby="playback-controls-title">
-  <header class="playback-panel__header">
-    <p class="playback-panel__eyebrow">{{ site.playback.eyebrow }}</p>
+<section class="practice-hud" aria-labelledby="playback-controls-title">
+  <header class="practice-hud__header">
+    <p class="practice-hud__eyebrow">{{ site.playback.eyebrow }}</p>
     <h2 id="playback-controls-title">{{ site.playback.heading }}</h2>
-    <p class="playback-panel__description">{{ site.playback.description }}</p>
+    <p class="practice-hud__description">{{ site.playback.description }}</p>
   </header>
 
-  @if (song()) {
-    <label class="playback-panel__practice-toggle" for="practice-mode-toggle-input">
-      <input
-        id="practice-mode-toggle-input"
-        class="playback-panel__practice-checkbox"
-        type="checkbox"
-        [checked]="isPracticeModeEnabled()"
-        [disabled]="!hasSong()"
-        (change)="onPracticeModeToggle($event)"
-      />
-      <span>{{ site.playback.practice.toggle }}</span>
-    </label>
+  <section class="practice-hud__section" aria-labelledby="practice-hud-transport-title">
+    <div class="practice-hud__section-head">
+      <h3 id="practice-hud-transport-title">{{ site.playback.fields.status }}</h3>
+      @if (song(); as currentSong) {
+        <span class="practice-hud__section-value">{{ currentSong.fileName }}</span>
+      }
+    </div>
 
-    <dl class="playback-panel__summary">
+    @if (song()) {
+      <dl class="practice-hud__stats">
+        <div>
+          <dt>{{ site.playback.fields.currentTime }}</dt>
+          <dd>{{ playbackState().currentTime | number: '1.0-2' }} s</dd>
+        </div>
+        <div>
+          <dt>{{ site.playback.fields.duration }}</dt>
+          <dd>{{ playbackState().duration | number: '1.0-2' }} s</dd>
+        </div>
+        <div>
+          <dt>{{ site.playback.fields.status }}</dt>
+          <dd>
+            {{
+              playbackState().isPlaying ? site.playback.states.playing : site.playback.states.paused
+            }}
+          </dd>
+        </div>
+      </dl>
+    } @else {
+      <p class="practice-hud__status">{{ site.playback.idleState }}</p>
+    }
+  </section>
+
+  <section class="practice-hud__section" aria-labelledby="practice-hud-calibration-title">
+    <div class="practice-hud__section-head">
+      <h3 id="practice-hud-calibration-title">{{ site.playback.calibration.title }}</h3>
+      <span class="practice-hud__section-value"
+        >{{ activeRange().firstLabel }} - {{ activeRange().lastLabel }}</span
+      >
+    </div>
+
+    <dl class="practice-hud__stats practice-hud__stats--compact">
       <div>
-        <dt>{{ site.playback.fields.currentTime }}</dt>
-        <dd>{{ playbackState().currentTime | number: '1.0-2' }} s</dd>
+        <dt>{{ site.playback.calibration.fields.connection }}</dt>
+        <dd>{{ connectionStatusLabel() }}</dd>
       </div>
       <div>
-        <dt>{{ site.playback.fields.duration }}</dt>
-        <dd>{{ playbackState().duration | number: '1.0-2' }} s</dd>
-      </div>
-      <div>
-        <dt>{{ site.playback.fields.status }}</dt>
-        <dd>
-          {{
-            playbackState().isPlaying ? site.playback.states.playing : site.playback.states.paused
-          }}
-        </dd>
+        <dt>{{ site.playback.calibration.fields.source }}</dt>
+        <dd>{{ calibrationSourceLabel() }}</dd>
       </div>
     </dl>
 
-    @if (isPracticeModeEnabled()) {
-      <dl class="playback-panel__practice-summary">
-        <div>
-          <dt>{{ site.playback.practice.fields.matchStatus }}</dt>
-          <dd>{{ practiceMatchStatus() }}</dd>
-        </div>
-        <div>
-          <dt>{{ site.playback.practice.fields.waitMode }}</dt>
-          <dd>{{ practiceWaitModeStatus() }}</dd>
-        </div>
+    <div class="practice-hud__actions practice-hud__actions--secondary">
+      <button class="practice-hud__button practice-hud__button--ghost" type="button" (click)="recalibrate()">
+        {{ site.playback.actions.recalibrate }}
+      </button>
+      @if (isMockMode()) {
+        <button class="practice-hud__button practice-hud__button--ghost" type="button" (click)="triggerMockNote()">
+          {{ site.playback.actions.simulate }}
+        </button>
+      }
+    </div>
+  </section>
+
+  <section class="practice-hud__section" aria-labelledby="practice-hud-practice-title">
+    <div class="practice-hud__section-head">
+      <h3 id="practice-hud-practice-title">{{ site.playback.practice.toggle }}</h3>
+      <label class="practice-hud__toggle" for="practice-mode-toggle-input">
+        <input
+          id="practice-mode-toggle-input"
+          class="practice-hud__toggle-input"
+          type="checkbox"
+          [checked]="isPracticeModeEnabled()"
+          [disabled]="!hasSong()"
+          (change)="onPracticeModeToggle($event)"
+        />
+        <span class="practice-hud__toggle-track" aria-hidden="true"></span>
+      </label>
+    </div>
+
+    <dl class="practice-hud__stats practice-hud__stats--practice">
+      <div>
+        <dt>{{ site.playback.practice.fields.matchStatus }}</dt>
+        <dd class="practice-hud__chip">{{ practiceMatchStatus() }}</dd>
+      </div>
+      <div>
+        <dt>{{ site.playback.practice.fields.waitMode }}</dt>
+        <dd class="practice-hud__chip">{{ practiceWaitModeStatus() }}</dd>
+      </div>
+    </dl>
+
+    @if (isPracticeDetailsVisible()) {
+      <dl class="practice-hud__stats practice-hud__stats--practice practice-hud__stats--detail">
         <div>
           <dt>{{ site.playback.practice.fields.expected }}</dt>
           <dd>{{ formatPitchList(practiceState().expectedPitches) }}</dd>
@@ -57,17 +107,15 @@
         </div>
         <div>
           <dt>{{ site.playback.practice.fields.matched }}</dt>
-          <dd class="playback-panel__practice-value playback-panel__practice-value--positive">
+          <dd class="practice-hud__value practice-hud__value--positive">
             {{ formatPitchList(practiceState().matchedPitches) }}
           </dd>
         </div>
         <div>
           <dt>{{ site.playback.practice.fields.missing }}</dt>
           <dd
-            class="playback-panel__practice-value"
-            [class.playback-panel__practice-value--warning]="
-              practiceState().missingPitches.length > 0
-            "
+            class="practice-hud__value"
+            [class.practice-hud__value--warning]="practiceState().missingPitches.length > 0"
           >
             {{ formatPitchList(practiceState().missingPitches) }}
           </dd>
@@ -75,24 +123,32 @@
         <div>
           <dt>{{ site.playback.practice.fields.extra }}</dt>
           <dd
-            class="playback-panel__practice-value"
-            [class.playback-panel__practice-value--caution]="
-              practiceState().extraInputPitches.length > 0
-            "
+            class="practice-hud__value"
+            [class.practice-hud__value--caution]="practiceState().extraInputPitches.length > 0"
           >
             {{ formatPitchList(practiceState().extraInputPitches) }}
           </dd>
         </div>
       </dl>
-
-      @if (shouldBlockPlayback()) {
-        <p class="playback-panel__practice-status">{{ site.playback.practice.blockedStatus }}</p>
-      }
+    } @else {
+      <p class="practice-hud__status practice-hud__status--subtle">
+        {{ site.playback.practice.inactiveHint }}
+      </p>
     }
 
-    <div class="playback-panel__actions">
+    @if (shouldBlockPlayback()) {
+      <p class="practice-hud__status practice-hud__status--warning">
+        {{ site.playback.practice.blockedStatus }}
+      </p>
+    }
+  </section>
+
+  <section class="practice-hud__section" aria-labelledby="practice-hud-actions-title">
+    <h3 id="practice-hud-actions-title" class="practice-hud__sr-only">{{ site.playback.heading }}</h3>
+
+    <div class="practice-hud__actions">
       <button
-        class="playback-panel__button"
+        class="practice-hud__button"
         type="button"
         (click)="play()"
         [disabled]="!canPlay() || playbackState().isPlaying"
@@ -100,7 +156,7 @@
         {{ site.playback.actions.play }}
       </button>
       <button
-        class="playback-panel__button"
+        class="practice-hud__button"
         type="button"
         (click)="pause()"
         [disabled]="!playbackState().isPlaying"
@@ -108,7 +164,7 @@
         {{ site.playback.actions.pause }}
       </button>
       <button
-        class="playback-panel__button"
+        class="practice-hud__button practice-hud__button--ghost"
         type="button"
         (click)="stop()"
         [disabled]="isStopDisabled()"
@@ -117,11 +173,11 @@
       </button>
     </div>
 
-    <label class="playback-panel__seek" for="playback-position-input">
+    <label class="practice-hud__seek" for="playback-position-input">
       <span>{{ site.playback.fields.position }}</span>
       <input
         id="playback-position-input"
-        class="playback-panel__slider"
+        class="practice-hud__slider"
         type="range"
         min="0"
         [max]="playbackState().duration"
@@ -131,7 +187,5 @@
         (input)="onSeek($event)"
       />
     </label>
-  } @else {
-    <p class="playback-panel__status">{{ site.playback.idleState }}</p>
-  }
+  </section>
 </section>

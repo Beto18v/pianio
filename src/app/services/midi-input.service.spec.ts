@@ -16,6 +16,7 @@ describe('MidiInputService', () => {
 
     expect(service.connectionState()).toBe('mock');
     expect(service.devices()).toHaveLength(1);
+    expect(service.errorMessage()).toBe('Web MIDI API no esta disponible en este navegador.');
 
     service.triggerMockNote();
 
@@ -58,6 +59,19 @@ describe('MidiInputService', () => {
     expect(service.lastEvent()?.type).toBe('noteOff');
     expect(service.lastEvent()?.pitch).toBe(64);
     expect(service.activePitches().has(64)).toBe(false);
+  });
+
+  it('surfaces the browser access error detail when requestMIDIAccess is rejected', async () => {
+    setNavigatorRequestMIDIAccess(
+      vi.fn().mockRejectedValue(new DOMException('Permission denied', 'SecurityError')),
+    );
+
+    const service = createService();
+    await service.initialize();
+
+    expect(service.connectionState()).toBe('mock');
+    expect(service.errorMessage()).toContain('SecurityError');
+    expect(service.errorMessage()).toContain('permiso MIDI');
   });
 });
 

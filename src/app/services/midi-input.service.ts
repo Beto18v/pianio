@@ -71,9 +71,9 @@ export class MidiInputService {
         this.syncDevicesFromAccess();
       };
       this.syncDevicesFromAccess();
-    } catch {
+    } catch (error) {
       this.midiAccess = null;
-      this.enableMockMode('No fue posible acceder a dispositivos MIDI. Se habilita modo simulado.');
+      this.enableMockMode(formatMidiAccessError(error));
     }
   }
 
@@ -121,7 +121,9 @@ export class MidiInputService {
 
     if (inputs.length === 0) {
       this.detachAllInputListeners();
-      this.enableMockMode('No se detectaron teclados MIDI. Puedes usar la simulacion.');
+      this.enableMockMode(
+        'No se detectaron entradas MIDI. Enciende el teclado y vuelve a buscar dispositivos.',
+      );
       return;
     }
 
@@ -282,4 +284,32 @@ function getEventType(status: number, velocity: number): MidiInputEventType | nu
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
+}
+
+function formatMidiAccessError(error: unknown): string {
+  const detail = getErrorDetail(error);
+
+  if (!detail) {
+    return 'No fue posible acceder a dispositivos MIDI. Revisa el permiso del navegador y vuelve a buscar dispositivos.';
+  }
+
+  if (detail.name === 'SecurityError' || detail.name === 'NotAllowedError') {
+    return `El navegador bloqueo el acceso MIDI (${detail.name}). Revisa el permiso MIDI del sitio y vuelve a buscar dispositivos.`;
+  }
+
+  return `No fue posible acceder a dispositivos MIDI (${detail.name}: ${detail.message}). Vuelve a buscar dispositivos.`;
+}
+
+function getErrorDetail(error: unknown): { name: string; message: string } | null {
+  if (!error || typeof error !== 'object') {
+    return null;
+  }
+
+  const name = 'name' in error && typeof error.name === 'string' ? error.name : 'Error';
+  const message =
+    'message' in error && typeof error.message === 'string'
+      ? error.message
+      : 'Sin detalle adicional.';
+
+  return { name, message };
 }

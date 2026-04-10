@@ -2,6 +2,8 @@ import { DecimalPipe } from '@angular/common';
 import { Component, computed, inject } from '@angular/core';
 
 import { siteContent } from '../../../core/site';
+import { KeyboardCalibrationService } from '../../../services/keyboard-calibration.service';
+import { MidiInputService } from '../../../services/midi-input.service';
 import { PlaybackAudioService } from '../../../services/playback-audio.service';
 import { PlaybackService } from '../../../services/playback.service';
 import { PracticeService } from '../../../services/practice.service';
@@ -17,6 +19,8 @@ export class PlaybackControlsComponent {
   protected readonly playbackService = inject(PlaybackService);
   protected readonly playbackAudioService = inject(PlaybackAudioService);
   protected readonly practiceService = inject(PracticeService);
+  protected readonly keyboardCalibrationService = inject(KeyboardCalibrationService);
+  protected readonly midiInputService = inject(MidiInputService);
   protected readonly song = this.playbackService.song;
   protected readonly playbackState = this.playbackService.playbackState;
   protected readonly hasSong = this.playbackService.hasSong;
@@ -25,6 +29,11 @@ export class PlaybackControlsComponent {
   protected readonly isPracticeModeEnabled = this.practiceService.isPracticeModeEnabled;
   protected readonly waitModeStatus = this.practiceService.waitModeStatus;
   protected readonly shouldBlockPlayback = this.practiceService.shouldBlockPlayback;
+  protected readonly activeRange = this.keyboardCalibrationService.activeRange;
+  protected readonly calibrationSource = this.keyboardCalibrationService.source;
+  protected readonly connectionState = this.midiInputService.connectionState;
+  protected readonly isMockMode = this.midiInputService.isMockMode;
+  protected readonly isPracticeDetailsVisible = computed(() => this.isPracticeModeEnabled());
   protected readonly hasExtraInputPitches = computed(
     () => this.practiceState().extraInputPitches.length > 0,
   );
@@ -58,6 +67,32 @@ export class PlaybackControlsComponent {
         return this.site.playback.practice.waitModeStates.disabled;
     }
   });
+  protected readonly connectionStatusLabel = computed(() => {
+    const state = this.connectionState();
+
+    if (state === 'ready') {
+      return this.site.midiInput.states.ready;
+    }
+
+    if (state === 'mock') {
+      return this.site.midiInput.states.mock;
+    }
+
+    return this.site.midiInput.states.idle;
+  });
+  protected readonly calibrationSourceLabel = computed(() => {
+    const source = this.calibrationSource();
+
+    switch (source) {
+      case 'fallback':
+        return this.site.calibration.states.fallback;
+      case 'calibrated':
+        return this.site.calibration.states.calibrated;
+      case 'default':
+      default:
+        return this.site.calibration.states.default;
+    }
+  });
   protected readonly isStopDisabled = computed(() => {
     const playbackState = this.playbackState();
 
@@ -75,6 +110,14 @@ export class PlaybackControlsComponent {
 
   protected stop(): void {
     this.practiceService.requestStop();
+  }
+
+  protected recalibrate(): void {
+    this.keyboardCalibrationService.startCalibration();
+  }
+
+  protected triggerMockNote(): void {
+    this.midiInputService.triggerMockNote();
   }
 
   protected onPracticeModeToggle(event: Event): void {

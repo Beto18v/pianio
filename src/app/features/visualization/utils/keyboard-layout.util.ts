@@ -24,46 +24,45 @@ export function createKeyboardLayout(startPitch: number, endPitch: number): Keyb
     throw new Error('Keyboard layout startPitch must be less than or equal to endPitch.');
   }
 
-  let whiteKeyCursor = 0;
-  const keys: KeyboardKey[] = [];
+  const absoluteKeys: Array<KeyboardKey & { absoluteLeftOffsetUnits: number }> = [];
 
   for (let pitch = startPitch; pitch <= endPitch; pitch += 1) {
     const pitchClass = getPitchClass(pitch);
     const isBlack = BLACK_PITCH_CLASSES.has(pitchClass);
+    const absoluteLeftOffsetUnits = getAbsoluteLeftOffsetUnits(pitch, isBlack);
 
-    if (isBlack) {
-      keys.push({
-        pitch,
-        pitchClass,
-        octave: getOctave(pitch),
-        label: getNoteLabel(pitch),
-        isBlack: true,
-        leftOffsetUnits: whiteKeyCursor - BLACK_KEY_WIDTH_UNITS / 2,
-        widthUnits: BLACK_KEY_WIDTH_UNITS,
-      });
-
-      continue;
-    }
-
-    keys.push({
+    absoluteKeys.push({
       pitch,
       pitchClass,
       octave: getOctave(pitch),
-      label: getNoteLabel(pitch),
-      isBlack: false,
-      leftOffsetUnits: whiteKeyCursor,
-      widthUnits: WHITE_KEY_WIDTH_UNITS,
+      label: getPitchLabel(pitch),
+      isBlack,
+      leftOffsetUnits: absoluteLeftOffsetUnits,
+      widthUnits: isBlack ? BLACK_KEY_WIDTH_UNITS : WHITE_KEY_WIDTH_UNITS,
+      absoluteLeftOffsetUnits,
     });
-
-    whiteKeyCursor += WHITE_KEY_WIDTH_UNITS;
   }
+
+  const minLeftOffsetUnits = absoluteKeys.reduce(
+    (minimum, key) => Math.min(minimum, key.absoluteLeftOffsetUnits),
+    Number.POSITIVE_INFINITY,
+  );
+  const maxRightOffsetUnits = absoluteKeys.reduce(
+    (maximum, key) => Math.max(maximum, key.absoluteLeftOffsetUnits + key.widthUnits),
+    Number.NEGATIVE_INFINITY,
+  );
+  const totalWidthUnits = Math.max(maxRightOffsetUnits - minLeftOffsetUnits, BLACK_KEY_WIDTH_UNITS);
+  const keys = absoluteKeys.map(({ absoluteLeftOffsetUnits, ...key }) => ({
+    ...key,
+    leftOffsetUnits: absoluteLeftOffsetUnits - minLeftOffsetUnits,
+  }));
 
   return {
     startPitch,
     endPitch,
     keyCount: keys.length,
-    whiteKeyCount: whiteKeyCursor,
-    totalWidthUnits: whiteKeyCursor,
+    whiteKeyCount: keys.filter((key) => !key.isBlack).length,
+    totalWidthUnits,
     keys,
   };
 }
@@ -109,9 +108,8 @@ function validatePitchBoundary(pitch: number, label: string): void {
   if (!Number.isInteger(pitch)) {
     throw new Error(`Keyboard layout ${label} must be an integer MIDI pitch.`);
   }
-
-  if (BLACK_PITCH_CLASSES.has(getPitchClass(pitch))) {
-    throw new Error(`Keyboard layout ${label} must land on a white key.`);
+  if (pitch < 0 || pitch > 127) {
+    throw new Error(`Keyboard layout ${label} must be inside the MIDI pitch range 0-127.`);
   }
 }
 
@@ -123,10 +121,32 @@ function getOctave(pitch: number): number {
   return Math.floor(pitch / 12) - 1;
 }
 
-function getNoteLabel(pitch: number): string {
+export function getPitchLabel(pitch: number): string {
   return `${NOTE_NAMES[getPitchClass(pitch)]}${getOctave(pitch)}`;
 }
 
 function toPercent(value: number, layout: KeyboardLayout): number {
   return (value / layout.totalWidthUnits) * 100;
+}
+
+function getAbsoluteLeftOffsetUnits(pitch: number, isBlack: boolean): number {
+  const whiteKeysBeforePitch = getWhiteKeyCountBeforePitch(pitch);
+
+  if (isBlack) {
+    return whiteKeysBeforePitch - BLACK_KEY_WIDTH_UNITS / 2;
+  }
+
+  return whiteKeysBeforePitch;
+}
+
+function getWhiteKeyCountBeforePitch(pitch: number): number {
+  let whiteKeyCount = 0;
+
+  for (let currentPitch = 0; currentPitch < pitch; currentPitch += 1) {
+    if (!BLACK_PITCH_CLASSES.has(getPitchClass(currentPitch))) {
+      whiteKeyCount += 1;
+    }
+  }
+
+  return whiteKeyCount;
 }

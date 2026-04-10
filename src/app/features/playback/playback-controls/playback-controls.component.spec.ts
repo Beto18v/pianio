@@ -39,9 +39,7 @@ describe('PlaybackControlsComponent', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
 
-    expect(compiled.textContent).toContain(
-      'Carga un archivo MIDI para habilitar el transporte base.',
-    );
+    expect(compiled.textContent).toContain('Carga un archivo MIDI para habilitar el transporte');
   });
 
   it('renders the transport state and forwards seek actions to the service', async () => {
@@ -65,7 +63,7 @@ describe('PlaybackControlsComponent', () => {
     slider.value = '1.25';
     slider.dispatchEvent(new Event('input'));
 
-    expect(compiled.textContent).toContain('Controles de reproduccion');
+    expect(compiled.textContent).toContain('HUD de practica');
     expect(compiled.textContent).toContain('3 s');
     expect(seekSpy).toHaveBeenCalledWith(1.25);
   });
@@ -90,9 +88,9 @@ describe('PlaybackControlsComponent', () => {
     const practiceToggle = compiled.querySelector(
       '#practice-mode-toggle-input',
     ) as HTMLInputElement | null;
-    const playButton = compiled.querySelector(
-      '.playback-panel__actions .playback-panel__button',
-    ) as HTMLButtonElement | null;
+    const playButton = Array.from(compiled.querySelectorAll('.practice-hud__button')).find(
+      (button) => button.textContent?.trim() === 'Play',
+    ) as HTMLButtonElement | undefined;
 
     if (!practiceToggle || !playButton) {
       throw new Error('Expected practice controls were not rendered.');
@@ -108,10 +106,10 @@ describe('PlaybackControlsComponent', () => {
 
     expect(playbackService.playbackState().isPlaying).toBe(false);
     expect(compiled.textContent).toContain('Esperando match');
-    expect(compiled.textContent).toContain('En espera (wait mode)');
+    expect(compiled.textContent).toContain('En espera');
     expect(compiled.textContent).toContain('Faltantes');
     expect(compiled.textContent).toContain('Aciertos');
-    expect(compiled.textContent).toContain('Input extra');
+    expect(compiled.textContent).toContain('Extras');
 
     midiInputService.triggerMockNote();
     TestBed.flushEffects();
