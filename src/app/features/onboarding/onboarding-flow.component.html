@@ -1,0 +1,139 @@
+@if (step() !== 'main') {
+  <section class="onboarding-backdrop" aria-hidden="true">
+    <div class="onboarding-backdrop__ambient"></div>
+    <div class="onboarding-backdrop__keyboard">
+      <app-piano-keyboard [layout]="keyboardLayout()" [activePitches]="activeInputPitches()" />
+    </div>
+  </section>
+
+  @if (step() === 'welcome') {
+    <section class="onboarding-screen onboarding-screen--welcome" aria-labelledby="welcome-title">
+      <article class="welcome-card">
+        <p class="welcome-card__eyebrow">{{ site.welcome.eyebrow }}</p>
+        <h1 id="welcome-title">{{ site.welcome.title }}</h1>
+        <p class="welcome-card__summary">{{ site.welcome.summary }}</p>
+        <p class="welcome-card__description">{{ site.welcome.description }}</p>
+
+        <ul class="welcome-card__list">
+          @for (highlight of site.welcome.highlights; track highlight) {
+            <li>{{ highlight }}</li>
+          }
+        </ul>
+
+        <div class="welcome-card__actions">
+          <button
+            id="welcome-continue-button"
+            class="flow-button"
+            type="button"
+            (click)="requestGoToCalibration()"
+          >
+            {{ site.flow.actions.continue }}
+          </button>
+        </div>
+      </article>
+    </section>
+  } @else if (step() === 'calibration') {
+    <section
+      class="onboarding-screen onboarding-screen--calibration"
+      aria-labelledby="calibration-screen-title"
+    >
+      <article class="calibration-screen">
+        <header class="calibration-screen__header">
+          <p class="calibration-screen__eyebrow">{{ site.calibration.heading }}</p>
+          <h1 id="calibration-screen-title">{{ site.calibration.readyTitle }}</h1>
+          <p class="calibration-screen__description">{{ site.calibration.readyDescription }}</p>
+
+          <p class="calibration-screen__connection">{{ calibrationConnectionLabel() }}</p>
+        </header>
+
+        <dl class="calibration-screen__summary">
+          <div>
+            <dt>{{ site.calibration.fields.firstKey }}</dt>
+            <dd>{{ firstCalibrationLabel() ?? keyboardCalibrationState().range.firstLabel }}</dd>
+          </div>
+          <div>
+            <dt>{{ site.calibration.fields.lastKey }}</dt>
+            <dd>{{ lastCalibrationLabel() ?? keyboardCalibrationState().range.lastLabel }}</dd>
+          </div>
+          <div>
+            <dt>{{ site.calibration.fields.range }}</dt>
+            <dd>
+              {{ keyboardCalibrationState().range.firstLabel }} -
+              {{ keyboardCalibrationState().range.lastLabel }}
+            </dd>
+          </div>
+          <div>
+            <dt>{{ site.calibration.fields.source }}</dt>
+            <dd>{{ calibrationSourceLabel() }}</dd>
+          </div>
+          <div>
+            <dt>{{ site.calibration.fields.mappingStatus }}</dt>
+            <dd>{{ calibrationMappingStatusLabel() }}</dd>
+          </div>
+        </dl>
+
+        <section class="calibration-screen__mapping" aria-labelledby="calibration-mapping-title">
+          <h2 id="calibration-mapping-title">{{ site.calibration.mapping.heading }}</h2>
+          <p class="calibration-screen__mapping-status">{{ calibrationMappingStatusLabel() }}</p>
+          <p class="calibration-screen__mapping-hint">{{ calibrationMappingHint() }}</p>
+        </section>
+
+        @if (calibrationErrorMessage(); as errorMessage) {
+          <p class="calibration-screen__error" role="alert">{{ errorMessage }}</p>
+        }
+
+        <div class="calibration-screen__actions">
+          <button
+            id="calibration-back-button"
+            class="flow-button flow-button--ghost"
+            type="button"
+            (click)="requestGoToWelcome()"
+          >
+            {{ site.flow.actions.back }}
+          </button>
+
+          @if (isMappingInProgress()) {
+            <button
+              id="calibration-retry-button"
+              class="flow-button"
+              type="button"
+              (click)="requestRetryCalibration()"
+            >
+              {{ site.calibration.actions.retry }}
+            </button>
+          } @else {
+            <button
+              id="calibration-start-button"
+              class="flow-button"
+              type="button"
+              (click)="requestStartCalibration()"
+              [disabled]="connectionState() !== 'ready'"
+            >
+              {{ site.calibration.actions.start }}
+            </button>
+          }
+
+          <button
+            id="calibration-fallback-button"
+            class="flow-button flow-button--ghost"
+            type="button"
+            (click)="requestUseFallbackRange()"
+          >
+            {{ site.calibration.actions.useFallback }}
+          </button>
+
+          @if (canEnterMainScene()) {
+            <button
+              id="calibration-confirm-button"
+              class="flow-button"
+              type="button"
+              (click)="requestConfirmCalibration()"
+            >
+              {{ site.flow.actions.enterMainScene }}
+            </button>
+          }
+        </div>
+      </article>
+    </section>
+  }
+}

@@ -5,6 +5,7 @@ import { MidiSong } from './domain/models/midi-song.model';
 import { MidiInputMonitorComponent } from './features/midi-input/midi-input-monitor.component';
 import { PlaybackControlsComponent } from './features/playback/playback-controls/playback-controls.component';
 import { MidiUploadComponent } from './features/midi-upload/midi-upload.component';
+import { OnboardingFlowComponent } from './features/onboarding/onboarding-flow.component';
 import { NoteRainComponent } from './features/visualization/note-rain/note-rain.component';
 import { PianoKeyboardComponent } from './features/visualization/piano-keyboard/piano-keyboard.component';
 import { getPitchLabel } from './features/visualization/utils/keyboard-layout.util';
@@ -18,6 +19,7 @@ type AppFlowStep = 'welcome' | 'calibration' | 'main';
 @Component({
   selector: 'app-root',
   imports: [
+    OnboardingFlowComponent,
     MidiUploadComponent,
     PlaybackControlsComponent,
     MidiInputMonitorComponent,
