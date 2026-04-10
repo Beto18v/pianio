@@ -10,8 +10,14 @@ describe('PlaybackControlsComponent', () => {
   let midiInputService: MidiInputService;
 
   beforeEach(async () => {
-    vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1));
-    vi.stubGlobal('cancelAnimationFrame', vi.fn(() => undefined));
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      vi.fn(() => 1),
+    );
+    vi.stubGlobal(
+      'cancelAnimationFrame',
+      vi.fn(() => undefined),
+    );
 
     await TestBed.configureTestingModule({
       imports: [PlaybackControlsComponent],

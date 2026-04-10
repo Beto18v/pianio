@@ -76,7 +76,8 @@ export const siteContent = {
     practice: {
       toggle: 'Activar modo practica',
       emptyPitches: '-',
-      blockedStatus: 'El transporte queda en pausa hasta que el input coincida con las notas esperadas.',
+      blockedStatus:
+        'El transporte queda en pausa hasta que el input coincida con las notas esperadas.',
       states: {
         disabled: 'Desactivado',
         match: 'Match',
