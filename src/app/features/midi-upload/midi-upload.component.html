@@ -12,7 +12,9 @@
       </div>
 
       @if (selectedFileName()) {
-        <p class="upload-panel__selected-file">Archivo actual: {{ selectedFileName() }}</p>
+        <p class="upload-panel__selected-file">
+          {{ site.upload.currentFilePrefix }} {{ selectedFileName() }}
+        </p>
       }
     </header>
   }
@@ -72,7 +74,7 @@
               @if (parsedSong.tempoBpm !== null) {
                 {{ parsedSong.tempoBpm | number: '1.0-2' }} BPM
               } @else {
-                No disponible
+                {{ site.upload.notAvailable }}
               }
             </dd>
           </div>

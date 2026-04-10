@@ -73,7 +73,7 @@ export class NoteRollComponent {
       return null;
     }
 
-    return `Mapa de notas para ${song.fileName} con ${layout.notes.length} bloques visibles.`;
+    return this.site.visualization.noteRoll.ariaLabel(song.fileName, layout.notes.length);
   });
 
   protected getHorizontalStyle(key: KeyboardKey): { left: string; width: string } {

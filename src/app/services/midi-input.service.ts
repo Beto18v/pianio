@@ -1,10 +1,12 @@
 import { Injectable, computed, signal } from '@angular/core';
 
+import { siteContent } from '../core/site';
 import { MidiDevice } from '../domain/models/midi-device.model';
 import { MidiInputEvent, MidiInputEventType } from '../domain/models/midi-input-event.model';
 
 const MOCK_DEVICE_ID = 'mock-midi-device';
 const MOCK_PITCH_SEQUENCE = [60, 62, 64, 67, 69];
+const midiInputCopy = siteContent.midiInput;
 
 export type MidiInputConnectionState = 'idle' | 'ready' | 'mock';
 
@@ -61,7 +63,7 @@ export class MidiInputService {
     const requestMIDIAccess = getRequestMIDIAccess();
 
     if (!requestMIDIAccess) {
-      this.enableMockMode('Web MIDI API no esta disponible en este navegador.');
+      this.enableMockMode(midiInputCopy.errors.webMidiNotAvailable);
       return;
     }
 
@@ -104,7 +106,7 @@ export class MidiInputService {
       velocity,
       timestamp: Date.now(),
       deviceId: MOCK_DEVICE_ID,
-      deviceName: 'Teclado virtual',
+      deviceName: midiInputCopy.mockDeviceName,
     });
     this.updateActivePitch(pitch, type);
   }
@@ -113,7 +115,7 @@ export class MidiInputService {
     const midiAccess = this.midiAccess;
 
     if (!midiAccess) {
-      this.enableMockMode('No hay acceso activo a Web MIDI.');
+      this.enableMockMode(midiInputCopy.errors.noActiveAccess);
       return;
     }
 
@@ -121,9 +123,7 @@ export class MidiInputService {
 
     if (inputs.length === 0) {
       this.detachAllInputListeners();
-      this.enableMockMode(
-        'No se detectaron entradas MIDI. Enciende el teclado y vuelve a buscar dispositivos.',
-      );
+      this.enableMockMode(midiInputCopy.errors.noInputsDetected);
       return;
     }
 
@@ -211,7 +211,7 @@ export class MidiInputService {
       velocity: clamp(rawVelocity / 127, 0, 1),
       timestamp: Date.now(),
       deviceId: input.id,
-      deviceName: input.name?.trim() || 'Dispositivo MIDI',
+      deviceName: input.name?.trim() || midiInputCopy.defaultDeviceName,
     });
     this.updateActivePitch(pitch, type);
   }
@@ -223,8 +223,8 @@ export class MidiInputService {
     this.devicesState.set([
       {
         id: MOCK_DEVICE_ID,
-        name: 'Teclado virtual',
-        manufacturer: 'PianoFlow',
+        name: midiInputCopy.mockDeviceName,
+        manufacturer: midiInputCopy.mockManufacturer,
         isMock: true,
       },
     ]);
@@ -264,7 +264,7 @@ function getRequestMIDIAccess(): (() => Promise<MidiAccessLike>) | null {
 function toMidiDevice(input: MidiInputPortLike): MidiDevice {
   return {
     id: input.id,
-    name: input.name?.trim() || 'Dispositivo MIDI',
+    name: input.name?.trim() || midiInputCopy.defaultDeviceName,
     manufacturer: input.manufacturer?.trim() || null,
     isMock: false,
   };
@@ -290,14 +290,14 @@ function formatMidiAccessError(error: unknown): string {
   const detail = getErrorDetail(error);
 
   if (!detail) {
-    return 'No fue posible acceder a dispositivos MIDI. Revisa el permiso del navegador y vuelve a buscar dispositivos.';
+    return midiInputCopy.errors.noAccessWithPermissionHint;
   }
 
   if (detail.name === 'SecurityError' || detail.name === 'NotAllowedError') {
-    return `El navegador bloqueo el acceso MIDI (${detail.name}). Revisa el permiso MIDI del sitio y vuelve a buscar dispositivos.`;
+    return midiInputCopy.errors.blockedAccess(detail.name);
   }
 
-  return `No fue posible acceder a dispositivos MIDI (${detail.name}: ${detail.message}). Vuelve a buscar dispositivos.`;
+  return midiInputCopy.errors.accessWithDetail(detail.name, detail.message);
 }
 
 function getErrorDetail(error: unknown): { name: string; message: string } | null {
@@ -309,7 +309,7 @@ function getErrorDetail(error: unknown): { name: string; message: string } | nul
   const message =
     'message' in error && typeof error.message === 'string'
       ? error.message
-      : 'Sin detalle adicional.';
+      : midiInputCopy.errors.noErrorDetail;
 
   return { name, message };
 }

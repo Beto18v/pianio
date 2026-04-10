@@ -36,6 +36,7 @@ export const siteContent = {
     'Escena fullscreen con rango calibrado y lluvia de notas',
   ],
   stage: {
+    mainAriaLabel: 'Escena principal de PianoFlow',
     idleTitle: 'Carga un archivo MIDI para iniciar la escena.',
     idleDescription:
       'El piano queda listo en pantalla completa y la lluvia de notas aparece cuando haya una cancion cargada.',
@@ -94,6 +95,10 @@ export const siteContent = {
       useFallback: 'Usar rango completo',
       confirm: 'Confirmar calibracion',
     },
+    errors: {
+      lastKeyMustBeGreaterOrEqual: (firstKeyLabel: string) =>
+        `La ultima tecla debe ser igual o mayor que ${firstKeyLabel}.`,
+    },
   },
   upload: {
     eyebrow: 'MIDI',
@@ -104,8 +109,10 @@ export const siteContent = {
     helperText:
       'Sube un archivo .mid o .midi para habilitar transporte, lluvia de notas y modo practica.',
     idleState: 'Aun no hay un archivo cargado.',
+    currentFilePrefix: 'Archivo actual:',
     loadingState: 'Procesando archivo...',
     errorState: 'No fue posible leer o parsear el archivo seleccionado.',
+    notAvailable: 'No disponible',
     summaryHeading: 'Resumen parseado',
     notePreviewHeading: 'Primeras notas',
     emptyNotes: 'El archivo no contiene notas utilizables para esta vista.',
@@ -129,12 +136,20 @@ export const siteContent = {
       whiteKeys: 'Blancas',
       blackKeys: 'Negras',
     },
+    keyboard: {
+      rangeLabel: (firstKeyLabel: string, lastKeyLabel: string) =>
+        `${firstKeyLabel} - ${lastKeyLabel}`,
+      ariaLabel: (keyCount: number, firstKeyLabel: string, lastKeyLabel: string) =>
+        `Teclado de piano de ${keyCount} teclas, desde ${firstKeyLabel} hasta ${lastKeyLabel}.`,
+    },
     noteRoll: {
       eyebrow: 'Visualizacion',
       heading: 'Mapa de notas',
       description: 'Bloques estaticos alineados por pitch y tiempo a partir del modelo MidiSong.',
       idleState: 'Carga un archivo MIDI para ubicar sus notas en esta vista.',
       emptyVisibleNotes: 'No hay notas visibles dentro del rango actual del teclado.',
+      ariaLabel: (songName: string, visibleBlocks: number) =>
+        `Mapa de notas para ${songName} con ${visibleBlocks} bloques visibles.`,
       fields: {
         duration: 'Duracion',
         visibleNotes: 'Bloques visibles',
@@ -143,6 +158,8 @@ export const siteContent = {
     },
     noteRain: {
       heading: 'Lluvia de notas',
+      ariaLabel: (songName: string, visibleNotes: number) =>
+        `Lluvia de notas para ${songName} con ${visibleNotes} notas visibles.`,
     },
   },
   playback: {
@@ -207,10 +224,27 @@ export const siteContent = {
   midiInput: {
     eyebrow: 'MIDI Input',
     heading: 'Entrada MIDI en vivo',
+    badgeAriaLabel: 'Dispositivos MIDI detectados',
     description:
       'Detecta teclados reales con Web MIDI API y permite simulacion defensiva cuando no hay hardware disponible.',
     unknownManufacturer: 'Fabricante no disponible',
+    defaultDeviceName: 'Dispositivo MIDI',
+    mockDeviceName: 'Teclado virtual',
+    mockManufacturer: 'PianoFlow',
     noEventState: 'Aun no se recibieron eventos noteOn/noteOff.',
+    errors: {
+      webMidiNotAvailable: 'Web MIDI API no esta disponible en este navegador.',
+      noActiveAccess: 'No hay acceso activo a Web MIDI.',
+      noInputsDetected:
+        'No se detectaron entradas MIDI. Enciende el teclado y vuelve a buscar dispositivos.',
+      noAccessWithPermissionHint:
+        'No fue posible acceder a dispositivos MIDI. Revisa el permiso del navegador y vuelve a buscar dispositivos.',
+      blockedAccess: (errorName: string) =>
+        `El navegador bloqueo el acceso MIDI (${errorName}). Revisa el permiso MIDI del sitio y vuelve a buscar dispositivos.`,
+      accessWithDetail: (errorName: string, errorMessage: string) =>
+        `No fue posible acceder a dispositivos MIDI (${errorName}: ${errorMessage}). Vuelve a buscar dispositivos.`,
+      noErrorDetail: 'Sin detalle adicional.',
+    },
     actions: {
       refresh: 'Buscar dispositivos',
       simulate: 'Simular nota',

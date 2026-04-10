@@ -1,6 +1,6 @@
 <main class="app-shell">
   @if (flowStep() === 'main') {
-    <section class="immersive-shell" aria-label="Escena principal de PianoFlow">
+    <section class="immersive-shell" [attr.aria-label]="site.stage.mainAriaLabel">
       <div class="immersive-shell__stage">
         <div class="immersive-shell__intro">
           <header class="immersive-shell__brand">

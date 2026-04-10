@@ -1,5 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 
+import { siteContent } from '../../../core/site';
 import { KeyboardLayout } from '../models/keyboard-layout.model';
 import { MVP_KEYBOARD_LAYOUT } from '../utils/keyboard-layout.util';
 
@@ -12,6 +13,7 @@ export class PianoKeyboardComponent {
   readonly layout = input<KeyboardLayout>(MVP_KEYBOARD_LAYOUT);
   readonly activePitches = input<ReadonlySet<number>>(new Set<number>());
 
+  protected readonly site = siteContent;
   protected readonly whiteKeys = computed(() => this.layout().keys.filter((key) => !key.isBlack));
   protected readonly blackKeys = computed(() => this.layout().keys.filter((key) => key.isBlack));
   protected readonly rangeLabel = computed(() => {
@@ -19,14 +21,18 @@ export class PianoKeyboardComponent {
     const firstKey = layout.keys[0];
     const lastKey = layout.keys.at(-1);
 
-    return `${firstKey?.label ?? ''} - ${lastKey?.label ?? ''}`;
+    return this.site.visualization.keyboard.rangeLabel(firstKey?.label ?? '', lastKey?.label ?? '');
   });
   protected readonly keyboardAriaLabel = computed(() => {
     const layout = this.layout();
     const firstKey = layout.keys[0];
     const lastKey = layout.keys.at(-1);
 
-    return `Teclado de piano de ${layout.keyCount} teclas, desde ${firstKey?.label} hasta ${lastKey?.label}.`;
+    return this.site.visualization.keyboard.ariaLabel(
+      layout.keyCount,
+      firstKey?.label ?? '',
+      lastKey?.label ?? '',
+    );
   });
   protected readonly labeledWhiteKeyPitches = computed(
     () =>

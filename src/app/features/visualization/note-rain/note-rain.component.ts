@@ -9,6 +9,7 @@ import {
   signal,
 } from '@angular/core';
 
+import { siteContent } from '../../../core/site';
 import { MidiSong } from '../../../domain/models/midi-song.model';
 import { createSongNoteIndex } from '../../../domain/utils/song-note-index.util';
 import { KeyboardLayout } from '../models/keyboard-layout.model';
@@ -25,6 +26,7 @@ export class NoteRainComponent implements AfterViewInit {
   readonly currentTime = input(0);
   readonly keyboardLayout = input<KeyboardLayout>(MVP_KEYBOARD_LAYOUT);
 
+  protected readonly site = siteContent;
   private readonly hostElement = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly viewportHeightState = signal(DEFAULT_NOTE_RAIN_LAYOUT_CONFIG.viewportHeightPx);
@@ -60,7 +62,7 @@ export class NoteRainComponent implements AfterViewInit {
       return null;
     }
 
-    return `Lluvia de notas para ${song.fileName} con ${layout.notes.length} notas visibles.`;
+    return this.site.visualization.noteRain.ariaLabel(song.fileName, layout.notes.length);
   });
 
   ngAfterViewInit(): void {

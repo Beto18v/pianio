@@ -1,5 +1,6 @@
 import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 
+import { siteContent } from '../core/site';
 import {
   KeyboardCalibrationRange,
   KeyboardCalibrationSource,
@@ -17,6 +18,7 @@ import { MidiInputService } from './midi-input.service';
   providedIn: 'root',
 })
 export class KeyboardCalibrationService {
+  private readonly site = siteContent;
   private readonly midiInputService = inject(MidiInputService);
   private readonly statusState = signal<KeyboardCalibrationStatus>('idle');
   private readonly sourceState = signal<KeyboardCalibrationSource>('default');
@@ -120,7 +122,7 @@ export class KeyboardCalibrationService {
 
     if (pitch < firstPitch) {
       this.errorMessageState.set(
-        `La ultima tecla debe ser igual o mayor que ${getPitchLabel(firstPitch)}.`,
+        this.site.calibration.errors.lastKeyMustBeGreaterOrEqual(getPitchLabel(firstPitch)),
       );
       return;
     }

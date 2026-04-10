@@ -32,6 +32,7 @@ This repository is split into:
 - `@tonejs/midi`
 - Web MIDI API + Web Audio API
 - Unit tests via Angular CLI + Vitest
+- E2E smoke tests via Playwright
 
 ### Requirements
 
@@ -92,6 +93,8 @@ High-level data flow:
 - `npm start` → `ng serve`
 - `npm run build` → production build
 - `npm test` → unit tests
+- `npm run e2e` → Playwright smoke tests (headless)
+- `npm run e2e:ui` → Playwright UI mode
 
 ### Planning docs
 
@@ -125,6 +128,7 @@ See `../pianoflow-planning/` for:
 - `@tonejs/midi`
 - Web MIDI API + Web Audio API
 - Unit tests con Angular CLI + Vitest
+- E2E smoke tests con Playwright
 
 ### Requisitos
 
@@ -185,6 +189,8 @@ Flujo de datos principal:
 - `npm start` → `ng serve`
 - `npm run build` → build de producción
 - `npm test` → unit tests
+- `npm run e2e` → smoke tests E2E con Playwright (headless)
+- `npm run e2e:ui` → Playwright en modo UI
 
 ### Planning
 

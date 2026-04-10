@@ -1,7 +1,7 @@
 <section
   class="midi-input-badge"
   [class.midi-input-badge--compact]="compact()"
-  aria-label="Dispositivos MIDI detectados"
+  [attr.aria-label]="site.midiInput.badgeAriaLabel"
 >
   @if (!compact()) {
     <p class="midi-input-badge__label">{{ site.midiInput.fields.devices }}</p>
