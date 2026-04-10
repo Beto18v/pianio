@@ -2,6 +2,11 @@
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.7.
 
+## Product planning
+
+Roadmap and planning docs live in `../pianoflow-planning`.
+Keep frontend code, tests, and UI copy focused on product behavior rather than planning labels.
+
 ## Development server
 
 To start a local development server, run:

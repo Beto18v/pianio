@@ -1,0 +1,131 @@
+:host {
+  display: block;
+}
+
+.keyboard-panel {
+  display: grid;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  border: 1px solid #c8d8d1;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.keyboard-panel__header {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.keyboard-panel__eyebrow {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #2f6f5e;
+}
+
+.keyboard-panel__description {
+  margin: 0;
+  color: #355046;
+  line-height: 1.5;
+}
+
+.keyboard-panel__summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 1rem;
+  margin: 0;
+}
+
+.keyboard-panel__summary div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.keyboard-panel__summary dt {
+  font-size: 0.875rem;
+  color: #547266;
+}
+
+.keyboard-panel__summary dd {
+  margin: 0;
+  font-weight: 600;
+  color: #18211d;
+}
+
+.keyboard-panel__viewport {
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.keyboard-panel__keyboard {
+  --white-key-count: 52;
+  position: relative;
+  min-width: max(100%, calc(var(--white-key-count) * 1.2rem));
+  height: clamp(9rem, 20vw, 12rem);
+  border: 1px solid #d7e3dd;
+  border-radius: 8px;
+  background: #f8fbf9;
+}
+
+.keyboard-panel__white-keys {
+  display: grid;
+  grid-template-columns: repeat(var(--white-key-count), minmax(0, 1fr));
+  height: 100%;
+}
+
+.keyboard-panel__black-keys {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.keyboard-panel__key {
+  box-sizing: border-box;
+}
+
+.keyboard-panel__key--white {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-height: 100%;
+  padding: 0.6rem 0.2rem;
+  border-right: 1px solid #d7e3dd;
+  background: linear-gradient(to bottom, #ffffff 0%, #f2f7f4 100%);
+}
+
+.keyboard-panel__white-keys .keyboard-panel__key--white:last-child {
+  border-right: 0;
+}
+
+.keyboard-panel__key--black {
+  position: absolute;
+  top: 0;
+  height: 62%;
+  border: 1px solid #101814;
+  border-radius: 0 0 6px 6px;
+  background: linear-gradient(to bottom, #33453f 0%, #1b2723 100%);
+  box-shadow: 0 0.25rem 0.4rem rgb(16 24 20 / 0.14);
+}
+
+.keyboard-panel__key-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #4a635a;
+  white-space: nowrap;
+}
+
+h2 {
+  margin: 0;
+  color: #18211d;
+}
+
+@media (max-width: 640px) {
+  .keyboard-panel {
+    padding: 1rem;
+  }
+
+  .keyboard-panel__keyboard {
+    min-width: max(100%, calc(var(--white-key-count) * 1.1rem));
+  }
+}

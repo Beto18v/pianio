@@ -1,0 +1,56 @@
+<section class="keyboard-panel" aria-labelledby="piano-keyboard-title">
+  <header class="keyboard-panel__header">
+    <p class="keyboard-panel__eyebrow">{{ site.visualization.eyebrow }}</p>
+    <h2 id="piano-keyboard-title">{{ site.visualization.heading }}</h2>
+    <p class="keyboard-panel__description">{{ site.visualization.description }}</p>
+  </header>
+
+  <dl class="keyboard-panel__summary">
+    <div>
+      <dt>{{ site.visualization.fields.range }}</dt>
+      <dd>{{ rangeLabel }}</dd>
+    </div>
+    <div>
+      <dt>{{ site.visualization.fields.totalKeys }}</dt>
+      <dd>{{ layout.keyCount }}</dd>
+    </div>
+    <div>
+      <dt>{{ site.visualization.fields.whiteKeys }}</dt>
+      <dd>{{ layout.whiteKeyCount }}</dd>
+    </div>
+    <div>
+      <dt>{{ site.visualization.fields.blackKeys }}</dt>
+      <dd>{{ blackKeyCount }}</dd>
+    </div>
+  </dl>
+
+  <div class="keyboard-panel__viewport">
+    <div
+      class="keyboard-panel__keyboard"
+      role="img"
+      [attr.aria-label]="keyboardAriaLabel"
+      [style.--white-key-count]="layout.whiteKeyCount"
+    >
+      <div class="keyboard-panel__white-keys" aria-hidden="true">
+        @for (key of whiteKeys; track key.pitch) {
+          <div class="keyboard-panel__key keyboard-panel__key--white" [attr.data-pitch]="key.pitch">
+            @if (labeledWhiteKeyPitches.has(key.pitch)) {
+              <span class="keyboard-panel__key-label">{{ key.label }}</span>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="keyboard-panel__black-keys" aria-hidden="true">
+        @for (key of blackKeys; track key.pitch) {
+          <div
+            class="keyboard-panel__key keyboard-panel__key--black"
+            [attr.data-pitch]="key.pitch"
+            [style.left.%]="(key.leftOffsetUnits / layout.totalWidthUnits) * 100"
+            [style.width.%]="(key.widthUnits / layout.totalWidthUnits) * 100"
+          ></div>
+        }
+      </div>
+    </div>
+  </div>
+</section>

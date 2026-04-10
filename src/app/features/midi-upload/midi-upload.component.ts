@@ -1,5 +1,5 @@
 import { DecimalPipe } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, output, signal } from '@angular/core';
 
 import { siteContent } from '../../core/site';
 import { MidiSong } from '../../domain/models/midi-song.model';
@@ -12,6 +12,8 @@ import { MidiParserService } from '../../services/midi-parser.service';
   styleUrl: './midi-upload.component.scss',
 })
 export class MidiUploadComponent {
+  readonly songParsed = output<MidiSong | null>();
+
   protected readonly site = siteContent;
   protected readonly isLoading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
@@ -33,12 +35,14 @@ export class MidiUploadComponent {
     this.isLoading.set(true);
     this.errorMessage.set(null);
     this.song.set(null);
+    this.songParsed.emit(null);
 
     try {
       const arrayBuffer = await file.arrayBuffer();
       const song = this.midiParserService.parse(arrayBuffer, file.name);
 
       this.song.set(song);
+      this.songParsed.emit(song);
       console.info('Parsed MIDI song', song);
       console.table(song.notes.slice(0, 10));
     } catch (error) {

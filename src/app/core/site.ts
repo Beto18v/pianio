@@ -1,12 +1,13 @@
 export const siteContent = {
   appName: 'PianoFlow',
-  heading: 'Carga un archivo MIDI y conviertelo en datos utilizables.',
+  heading: 'Carga un archivo MIDI y revisa su estructura en pantalla.',
   description:
-    'Valida el flujo base de la app leyendo un archivo local, parseandolo en el navegador y mostrandolo con un modelo simple.',
+    'El archivo se procesa en el navegador y se presenta con un resumen tecnico y vistas base para inspeccionar su contenido.',
   scopeItems: [
     'Seleccion local de archivos .mid y .midi',
     'Parsing en frontend con @tonejs/midi',
-    'Resumen simple para verificacion rapida',
+    'Resumen tecnico para verificacion rapida',
+    'Base visual para teclado y notas',
   ],
   upload: {
     eyebrow: 'Entrada local',
@@ -20,7 +21,7 @@ export const siteContent = {
     errorState: 'No fue posible leer o parsear el archivo seleccionado.',
     summaryHeading: 'Resumen parseado',
     notePreviewHeading: 'Primeras notas',
-    emptyNotes: 'El archivo no contiene notas utilizables para esta fase.',
+    emptyNotes: 'El archivo no contiene notas utilizables para esta vista.',
     fields: {
       fileName: 'Archivo',
       duration: 'Duracion',
@@ -28,6 +29,30 @@ export const siteContent = {
       noteCount: 'Notas',
       tempo: 'Tempo',
       ppq: 'PPQ',
+    },
+  },
+  visualization: {
+    eyebrow: 'Visualizacion',
+    heading: 'Teclado de referencia',
+    description:
+      'Rango visual fijo de 88 teclas para validar la disposicion horizontal antes de renderizar bloques de notas.',
+    fields: {
+      range: 'Rango visible',
+      totalKeys: 'Teclas',
+      whiteKeys: 'Blancas',
+      blackKeys: 'Negras',
+    },
+    noteRoll: {
+      eyebrow: 'Visualizacion',
+      heading: 'Mapa de notas',
+      description: 'Bloques estaticos alineados por pitch y tiempo a partir del modelo MidiSong.',
+      idleState: 'Carga un archivo MIDI para ubicar sus notas en esta vista.',
+      emptyVisibleNotes: 'No hay notas visibles dentro del rango actual del teclado.',
+      fields: {
+        duration: 'Duracion',
+        visibleNotes: 'Bloques visibles',
+        hiddenNotes: 'Fuera de rango',
+      },
     },
   },
 } as const;

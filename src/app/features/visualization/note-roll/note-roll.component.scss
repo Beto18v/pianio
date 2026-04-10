@@ -1,0 +1,118 @@
+:host {
+  display: block;
+}
+
+.note-roll-panel {
+  display: grid;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  border: 1px solid #c8d8d1;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.note-roll-panel__header {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.note-roll-panel__eyebrow {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #2f6f5e;
+}
+
+.note-roll-panel__description,
+.note-roll-panel__status {
+  margin: 0;
+  color: #355046;
+  line-height: 1.5;
+}
+
+.note-roll-panel__summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 1rem;
+  margin: 0;
+}
+
+.note-roll-panel__summary div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.note-roll-panel__summary dt {
+  font-size: 0.875rem;
+  color: #547266;
+}
+
+.note-roll-panel__summary dd {
+  margin: 0;
+  font-weight: 600;
+  color: #18211d;
+}
+
+.note-roll-panel__status {
+  padding: 0.875rem 1rem;
+  border-radius: 8px;
+  background: #edf5f1;
+}
+
+.note-roll-panel__viewport {
+  overflow: auto;
+  border: 1px solid #d7e3dd;
+  border-radius: 8px;
+  background: #f8fbf9;
+}
+
+.note-roll-panel__roll {
+  --white-key-count: 52;
+  position: relative;
+  min-width: max(100%, calc(var(--white-key-count) * 1.2rem));
+  min-height: 15rem;
+}
+
+.note-roll-panel__lanes,
+.note-roll-panel__notes {
+  position: absolute;
+  inset: 0;
+}
+
+.note-roll-panel__lane {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-right: 1px solid #d7e3dd;
+  background: rgb(255 255 255 / 0.68);
+}
+
+.note-roll-panel__lane--black {
+  background: rgb(214 226 220 / 0.55);
+}
+
+.note-roll-panel__note {
+  position: absolute;
+  box-sizing: border-box;
+  min-width: 2px;
+  border: 1px solid #2f6f5e;
+  border-radius: 6px;
+  background: linear-gradient(to bottom, #a4d8c8 0%, #5ba78e 100%);
+  box-shadow: 0 0.18rem 0.3rem rgb(47 111 94 / 0.16);
+}
+
+.note-roll-panel__note--black {
+  background: linear-gradient(to bottom, #7dc0aa 0%, #3f8c74 100%);
+}
+
+h2 {
+  margin: 0;
+  color: #18211d;
+}
+
+@media (max-width: 640px) {
+  .note-roll-panel {
+    padding: 1rem;
+  }
+}

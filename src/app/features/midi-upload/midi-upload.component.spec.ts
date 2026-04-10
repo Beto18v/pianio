@@ -48,11 +48,15 @@ describe('MidiUploadComponent', () => {
     parserService.parse.mockReturnValue(parsedSong);
 
     const fixture = TestBed.createComponent(MidiUploadComponent);
+    const emissions: Array<MidiSong | null> = [];
+    fixture.componentInstance.songParsed.subscribe((song) => emissions.push(song));
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
     const input = compiled.querySelector('#midi-file-input') as HTMLInputElement;
-    const file = new File([new Uint8Array([77, 84, 104, 100])], 'scale.mid', { type: 'audio/midi' });
+    const file = new File([new Uint8Array([77, 84, 104, 100])], 'scale.mid', {
+      type: 'audio/midi',
+    });
 
     Object.defineProperty(input, 'files', {
       configurable: true,
@@ -69,6 +73,7 @@ describe('MidiUploadComponent', () => {
     expect(compiled.textContent).toContain('Resumen parseado');
     expect(compiled.textContent).toContain('scale.mid');
     expect(compiled.textContent).toContain('120');
+    expect(emissions).toEqual([null, parsedSong]);
   });
 
   it('shows an error message when parsing fails', async () => {
@@ -77,6 +82,8 @@ describe('MidiUploadComponent', () => {
     });
 
     const fixture = TestBed.createComponent(MidiUploadComponent);
+    const emissions: Array<MidiSong | null> = [];
+    fixture.componentInstance.songParsed.subscribe((song) => emissions.push(song));
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -92,7 +99,10 @@ describe('MidiUploadComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(compiled.textContent).toContain('No fue posible leer o parsear el archivo seleccionado.');
+    expect(compiled.textContent).toContain(
+      'No fue posible leer o parsear el archivo seleccionado.',
+    );
+    expect(emissions).toEqual([null]);
   });
 });
 

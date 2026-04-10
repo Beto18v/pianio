@@ -1,0 +1,71 @@
+<section class="note-roll-panel" aria-labelledby="note-roll-title">
+  <header class="note-roll-panel__header">
+    <p class="note-roll-panel__eyebrow">{{ site.visualization.noteRoll.eyebrow }}</p>
+    <h2 id="note-roll-title">{{ site.visualization.noteRoll.heading }}</h2>
+    <p class="note-roll-panel__description">{{ site.visualization.noteRoll.description }}</p>
+  </header>
+
+  @if (song(); as currentSong) {
+    @if (noteRollLayout(); as layout) {
+      <dl class="note-roll-panel__summary">
+        <div>
+          <dt>{{ site.visualization.noteRoll.fields.duration }}</dt>
+          <dd>{{ currentSong.duration | number: '1.0-3' }} s</dd>
+        </div>
+        <div>
+          <dt>{{ site.visualization.noteRoll.fields.visibleNotes }}</dt>
+          <dd>{{ layout.notes.length }}</dd>
+        </div>
+        <div>
+          <dt>{{ site.visualization.noteRoll.fields.hiddenNotes }}</dt>
+          <dd>{{ layout.hiddenNoteCount }}</dd>
+        </div>
+      </dl>
+
+      @if (layout.notes.length > 0) {
+        <div class="note-roll-panel__viewport">
+          <div
+            class="note-roll-panel__roll"
+            role="img"
+            [attr.aria-label]="rollAriaLabel()"
+            [style.height.px]="layout.totalHeightPx"
+            [style.--white-key-count]="keyboardLayout.whiteKeyCount"
+          >
+            <div class="note-roll-panel__lanes" aria-hidden="true">
+              @for (key of laneKeys; track key.pitch) {
+                <div
+                  class="note-roll-panel__lane"
+                  [class.note-roll-panel__lane--black]="key.isBlack"
+                  [attr.data-pitch]="key.pitch"
+                  [style.left]="getHorizontalStyle(key).left"
+                  [style.width]="getHorizontalStyle(key).width"
+                ></div>
+              }
+            </div>
+
+            <div class="note-roll-panel__notes" aria-hidden="true">
+              @for (
+                note of layout.notes;
+                track note.track + '-' + note.startTime + '-' + note.pitch
+              ) {
+                <div
+                  class="note-roll-panel__note"
+                  [class.note-roll-panel__note--black]="note.isBlack"
+                  [attr.data-pitch]="note.pitch"
+                  [style.left.%]="note.leftPercent"
+                  [style.width.%]="note.widthPercent"
+                  [style.top.px]="note.topPx"
+                  [style.height.px]="note.heightPx"
+                ></div>
+              }
+            </div>
+          </div>
+        </div>
+      } @else {
+        <p class="note-roll-panel__status">{{ site.visualization.noteRoll.emptyVisibleNotes }}</p>
+      }
+    }
+  } @else {
+    <p class="note-roll-panel__status">{{ site.visualization.noteRoll.idleState }}</p>
+  }
+</section>
