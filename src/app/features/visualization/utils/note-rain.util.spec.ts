@@ -74,6 +74,32 @@ describe('note-rain.util', () => {
     expect(layout.notes[0]?.pitch).toBe(60);
   });
 
+  it('caps visible notes and keeps active notes first under dense windows', () => {
+    const song: MidiSong = {
+      fileName: 'dense-window.mid',
+      duration: 4,
+      tempoBpm: 128,
+      ppq: 480,
+      trackCount: 1,
+      notes: [
+        { pitch: 60, velocity: 0.8, startTime: 0.2, duration: 2, track: 0 },
+        { pitch: 62, velocity: 0.75, startTime: 0.9, duration: 0.8, track: 0 },
+        { pitch: 64, velocity: 0.9, startTime: 1.02, duration: 0.6, track: 0 },
+        { pitch: 65, velocity: 0.7, startTime: 1.08, duration: 0.6, track: 0 },
+      ],
+    };
+
+    const layout = createNoteRainLayout(song, 1, {
+      ...DEFAULT_NOTE_RAIN_LAYOUT_CONFIG,
+      maxVisibleNotes: 2,
+    });
+
+    expect(layout.notes).toHaveLength(2);
+    expect(layout.hiddenNoteCount).toBe(2);
+    expect(layout.notes.map((note) => note.pitch)).toContain(60);
+    expect(layout.notes.map((note) => note.pitch)).toContain(62);
+  });
+
   it('attaches hand and fingering annotations when available', () => {
     const note: NoteEvent = {
       pitch: 60,
@@ -125,5 +151,12 @@ describe('note-rain.util', () => {
         viewportHeightPx: 0,
       }),
     ).toThrow('Note rain layout viewportHeightPx must be a positive number.');
+
+    expect(() =>
+      getFallingNote(note, 0, {
+        ...DEFAULT_NOTE_RAIN_LAYOUT_CONFIG,
+        maxVisibleNotes: 0,
+      }),
+    ).toThrow('Note rain layout maxVisibleNotes must be a positive number.');
   });
 });

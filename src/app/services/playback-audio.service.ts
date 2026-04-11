@@ -2,9 +2,9 @@ import { Injectable, effect, inject } from '@angular/core';
 
 import { MidiSong } from '../domain/models/midi-song.model';
 import { NoteEvent } from '../domain/models/note-event.model';
+import { BASE_POLYPHONY_CAP, FrameBudgetService } from './frame-budget.service';
 import { PlaybackService } from './playback.service';
 
-const MAX_POLYPHONY = 10;
 const LOOKAHEAD_SECONDS = 0.12;
 const SCHEDULE_LEAD_SECONDS = 0.003;
 const FORWARD_RESET_THRESHOLD_SECONDS = 0.55;
@@ -34,6 +34,7 @@ interface WindowWithWebkitAudioContext extends Window {
 })
 export class PlaybackAudioService {
   private readonly playbackService = inject(PlaybackService);
+  private readonly frameBudgetService = inject(FrameBudgetService);
 
   private readonly activeVoices = new Map<number, ActiveVoice>();
   private scheduledWindowVoices: ScheduledWindowVoice[] = [];
@@ -138,6 +139,7 @@ export class PlaybackAudioService {
     currentTime: number,
     audioContext: AudioContext,
   ): void {
+    const polyphonyCap = this.resolvePolyphonyCap();
     const activeNotes = song.notes
       .map((note, index) => ({ index, note }))
       .filter(({ note }) => note.startTime < currentTime && isNoteActive(note, currentTime))
@@ -145,7 +147,7 @@ export class PlaybackAudioService {
         (left, right) =>
           normalizeVelocity(right.note.velocity) - normalizeVelocity(left.note.velocity),
       )
-      .slice(0, MAX_POLYPHONY);
+      .slice(0, polyphonyCap);
 
     for (const { note } of activeNotes) {
       this.pruneWindowVoices(note.startTime);
@@ -160,6 +162,12 @@ export class PlaybackAudioService {
   }
 
   private scheduleLookahead(song: MidiSong, currentTime: number, audioContext: AudioContext): void {
+    const polyphonyCap = this.resolvePolyphonyCap();
+
+    if (polyphonyCap < 1) {
+      return;
+    }
+
     const windowEndTime = Math.min(song.duration, currentTime + LOOKAHEAD_SECONDS);
 
     if (windowEndTime <= this.scheduledThroughTime) {
@@ -187,7 +195,7 @@ export class PlaybackAudioService {
 
       this.pruneWindowVoices(note.startTime);
 
-      if (this.scheduledWindowVoices.length >= MAX_POLYPHONY) {
+      if (this.scheduledWindowVoices.length >= polyphonyCap) {
         continue;
       }
 
@@ -199,11 +207,21 @@ export class PlaybackAudioService {
         note,
         currentTime,
         audioContext,
-        Math.min(this.scheduledWindowVoices.length, MAX_POLYPHONY),
+        Math.min(this.scheduledWindowVoices.length, polyphonyCap),
       );
     }
 
     this.scheduledThroughTime = windowEndTime;
+  }
+
+  private resolvePolyphonyCap(): number {
+    const adaptiveCap = this.frameBudgetService.guardrails().polyphonyCap;
+
+    if (!Number.isFinite(adaptiveCap) || adaptiveCap <= 0) {
+      return BASE_POLYPHONY_CAP;
+    }
+
+    return Math.max(1, Math.floor(adaptiveCap));
   }
 
   private pruneWindowVoices(songTime: number): void {

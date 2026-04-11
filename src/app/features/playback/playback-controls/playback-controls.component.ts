@@ -4,6 +4,7 @@ import { Component, computed, inject } from '@angular/core';
 import { siteContent } from '../../../core/site';
 import { KeyboardCalibrationService } from '../../../services/keyboard-calibration.service';
 import { MidiInputService } from '../../../services/midi-input.service';
+import { FrameBudgetService } from '../../../services/frame-budget.service';
 import { PlaybackAudioService } from '../../../services/playback-audio.service';
 import { PlaybackService } from '../../../services/playback.service';
 import { PracticeService } from '../../../services/practice.service';
@@ -18,11 +19,14 @@ export class PlaybackControlsComponent {
   protected readonly site = siteContent;
   protected readonly playbackService = inject(PlaybackService);
   protected readonly playbackAudioService = inject(PlaybackAudioService);
+  protected readonly frameBudgetService = inject(FrameBudgetService);
   protected readonly practiceService = inject(PracticeService);
   protected readonly keyboardCalibrationService = inject(KeyboardCalibrationService);
   protected readonly midiInputService = inject(MidiInputService);
   protected readonly song = this.playbackService.song;
   protected readonly playbackState = this.playbackService.playbackState;
+  protected readonly frameBudgetSnapshot = this.frameBudgetService.snapshot;
+  protected readonly adaptiveGuardrails = this.frameBudgetService.guardrails;
   protected readonly hasSong = this.playbackService.hasSong;
   protected readonly canPlay = this.playbackService.canPlay;
   protected readonly practiceState = this.practiceService.state;
@@ -37,6 +41,22 @@ export class PlaybackControlsComponent {
   protected readonly hasExtraInputPitches = computed(
     () => this.practiceState().extraInputPitches.length > 0,
   );
+  protected readonly longFramePercent = computed(() =>
+    Math.round(this.frameBudgetSnapshot().longFrameRatio * 100),
+  );
+  protected readonly guardrailModeLabel = computed(() => {
+    const mode = this.adaptiveGuardrails().mode;
+
+    switch (mode) {
+      case 'adaptive':
+        return this.site.playback.performance.modes.adaptive;
+      case 'constrained':
+        return this.site.playback.performance.modes.constrained;
+      case 'stable':
+      default:
+        return this.site.playback.performance.modes.stable;
+    }
+  });
   protected readonly practiceMatchStatus = computed(() => {
     if (!this.isPracticeModeEnabled()) {
       return this.site.playback.practice.states.disabled;

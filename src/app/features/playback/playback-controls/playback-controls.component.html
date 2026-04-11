@@ -37,6 +37,40 @@
     }
   </section>
 
+  <section class="practice-hud__section" aria-labelledby="practice-hud-performance-title">
+    <div class="practice-hud__section-head">
+      <h3 id="practice-hud-performance-title">{{ site.playback.performance.title }}</h3>
+      <span class="practice-hud__section-value">{{ guardrailModeLabel() }}</span>
+    </div>
+
+    <dl class="practice-hud__stats practice-hud__stats--performance">
+      <div>
+        <dt>{{ site.playback.performance.fields.frameBudget }}</dt>
+        <dd>{{ frameBudgetSnapshot().targetFrameMs | number: '1.0-2' }} ms</dd>
+      </div>
+      <div>
+        <dt>{{ site.playback.performance.fields.averageFrame }}</dt>
+        <dd>{{ frameBudgetSnapshot().averageFrameMs | number: '1.0-2' }} ms</dd>
+      </div>
+      <div>
+        <dt>{{ site.playback.performance.fields.longFrames }}</dt>
+        <dd>{{ longFramePercent() }}%</dd>
+      </div>
+      <div>
+        <dt>{{ site.playback.performance.fields.visibleNoteCap }}</dt>
+        <dd>{{ adaptiveGuardrails().visibleNoteCap }}</dd>
+      </div>
+      <div>
+        <dt>{{ site.playback.performance.fields.polyphonyCap }}</dt>
+        <dd>{{ adaptiveGuardrails().polyphonyCap }}</dd>
+      </div>
+      <div>
+        <dt>{{ site.playback.performance.fields.guardrailMode }}</dt>
+        <dd class="practice-hud__chip">{{ guardrailModeLabel() }}</dd>
+      </div>
+    </dl>
+  </section>
+
   <section class="practice-hud__section" aria-labelledby="practice-hud-calibration-title">
     <div class="practice-hud__section-head">
       <h3 id="practice-hud-calibration-title">{{ site.playback.calibration.title }}</h3>
@@ -57,11 +91,19 @@
     </dl>
 
     <div class="practice-hud__actions practice-hud__actions--secondary">
-      <button class="practice-hud__button practice-hud__button--ghost" type="button" (click)="recalibrate()">
+      <button
+        class="practice-hud__button practice-hud__button--ghost"
+        type="button"
+        (click)="recalibrate()"
+      >
         {{ site.playback.actions.recalibrate }}
       </button>
       @if (isMockMode()) {
-        <button class="practice-hud__button practice-hud__button--ghost" type="button" (click)="triggerMockNote()">
+        <button
+          class="practice-hud__button practice-hud__button--ghost"
+          type="button"
+          (click)="triggerMockNote()"
+        >
           {{ site.playback.actions.simulate }}
         </button>
       }
@@ -144,7 +186,9 @@
   </section>
 
   <section class="practice-hud__section" aria-labelledby="practice-hud-actions-title">
-    <h3 id="practice-hud-actions-title" class="practice-hud__sr-only">{{ site.playback.heading }}</h3>
+    <h3 id="practice-hud-actions-title" class="practice-hud__sr-only">
+      {{ site.playback.heading }}
+    </h3>
 
     <div class="practice-hud__actions">
       <button

@@ -1,7 +1,8 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 
 import { MidiSong } from '../domain/models/midi-song.model';
 import { PlaybackState } from '../domain/models/playback-state.model';
+import { FrameBudgetService } from './frame-budget.service';
 
 const INITIAL_PLAYBACK_STATE: PlaybackState = {
   isPlaying: false,
@@ -13,6 +14,7 @@ const INITIAL_PLAYBACK_STATE: PlaybackState = {
   providedIn: 'root',
 })
 export class PlaybackService {
+  private readonly frameBudgetService = inject(FrameBudgetService);
   private readonly songState = signal<MidiSong | null>(null);
   private readonly playbackStateState = signal<PlaybackState>(INITIAL_PLAYBACK_STATE);
 
@@ -27,6 +29,7 @@ export class PlaybackService {
 
   setSong(song: MidiSong | null): void {
     this.cancelFrame();
+    this.frameBudgetService.clearSamples();
     this.songState.set(song);
     this.playbackAnchorTimeMs = null;
     this.anchorSongTime = 0;
@@ -52,6 +55,7 @@ export class PlaybackService {
 
     this.anchorSongTime = nextTime;
     this.playbackAnchorTimeMs = performance.now();
+    this.frameBudgetService.resetFrameClock();
     this.playbackStateState.update((current) => ({
       ...current,
       isPlaying: true,
@@ -67,6 +71,7 @@ export class PlaybackService {
 
     this.syncCurrentTime(performance.now());
     this.cancelFrame();
+    this.frameBudgetService.resetFrameClock();
     this.playbackStateState.update((current) => ({
       ...current,
       isPlaying: false,
@@ -77,6 +82,7 @@ export class PlaybackService {
 
   stop(): void {
     this.cancelFrame();
+    this.frameBudgetService.resetFrameClock();
     this.playbackAnchorTimeMs = null;
     this.anchorSongTime = 0;
     this.playbackStateState.update((current) => ({
@@ -99,6 +105,7 @@ export class PlaybackService {
     this.playbackAnchorTimeMs = isPlaying ? performance.now() : null;
 
     if (isPlaying) {
+      this.frameBudgetService.resetFrameClock();
       this.scheduleFrame();
     }
   }
@@ -110,6 +117,7 @@ export class PlaybackService {
       return;
     }
 
+    this.frameBudgetService.recordFrame(timestamp);
     this.syncCurrentTime(timestamp);
 
     if (this.playbackStateState().isPlaying) {

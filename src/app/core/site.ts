@@ -168,6 +168,22 @@ export const siteContent = {
     description:
       'Controla el transporte, sigue el estado del wait mode y revisa el match contra tu teclado actual.',
     idleState: 'Carga un archivo MIDI para habilitar el transporte y la practica.',
+    performance: {
+      title: 'Rendimiento',
+      fields: {
+        frameBudget: 'Budget objetivo',
+        averageFrame: 'Frame promedio',
+        longFrames: 'Frames largos',
+        guardrailMode: 'Modo guardrails',
+        visibleNoteCap: 'Cap notas visibles',
+        polyphonyCap: 'Cap polifonia',
+      },
+      modes: {
+        stable: 'Estable',
+        adaptive: 'Adaptativo',
+        constrained: 'Proteccion alta',
+      },
+    },
     actions: {
       play: 'Play',
       pause: 'Pause',

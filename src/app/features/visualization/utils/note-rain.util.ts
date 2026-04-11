@@ -20,6 +20,7 @@ export interface NoteRainLayoutConfig {
   pixelsPerSecond: number;
   hitLineOffsetPx: number;
   minNoteHeightPx: number;
+  maxVisibleNotes: number;
 }
 
 export interface FallingNote {
@@ -49,6 +50,7 @@ export const DEFAULT_NOTE_RAIN_LAYOUT_CONFIG: Readonly<NoteRainLayoutConfig> = {
   pixelsPerSecond: 180,
   hitLineOffsetPx: 28,
   minNoteHeightPx: 10,
+  maxVisibleNotes: 220,
 };
 
 export function getFallingNote(
@@ -122,11 +124,60 @@ export function createNoteRainLayout(
     )
     .filter((note): note is FallingNote => note !== null);
 
+  const cappedNotes = applyVisibleNoteCap(notes, currentTime, config.maxVisibleNotes);
+
   return {
     hitLineTopPx: config.viewportHeightPx - config.hitLineOffsetPx,
-    notes,
-    hiddenNoteCount: song.notes.length - notes.length,
+    notes: cappedNotes,
+    hiddenNoteCount: song.notes.length - cappedNotes.length,
   };
+}
+
+function applyVisibleNoteCap(
+  notes: ReadonlyArray<FallingNote>,
+  currentTime: number,
+  maxVisibleNotes: number,
+): ReadonlyArray<FallingNote> {
+  const safeCap = Math.max(1, Math.floor(maxVisibleNotes));
+
+  if (notes.length <= safeCap) {
+    return notes;
+  }
+
+  const prioritized = notes
+    .map((note, index) => ({
+      index,
+      score: getVisibilityPriorityScore(note, currentTime),
+      note,
+    }))
+    .sort((left, right) => {
+      if (right.score !== left.score) {
+        return right.score - left.score;
+      }
+
+      if (left.note.startTime !== right.note.startTime) {
+        return left.note.startTime - right.note.startTime;
+      }
+
+      if (left.note.pitch !== right.note.pitch) {
+        return left.note.pitch - right.note.pitch;
+      }
+
+      return left.index - right.index;
+    });
+
+  const keptIndices = new Set(prioritized.slice(0, safeCap).map((entry) => entry.index));
+
+  return notes.filter((_, index) => keptIndices.has(index));
+}
+
+function getVisibilityPriorityScore(note: FallingNote, currentTime: number): number {
+  const activeBoost = note.isActive ? 3 : 0;
+  const distanceFromNow = Math.abs(note.startTime - currentTime);
+  const temporalProximityBoost = 1 / (1 + distanceFromNow * 4);
+  const velocityBoost = clamp(note.velocity, 0, 1) * 0.15;
+
+  return activeBoost + temporalProximityBoost + velocityBoost;
 }
 
 function getStartTimeWindow(
@@ -170,4 +221,12 @@ function validateLayoutConfig(config: NoteRainLayoutConfig): void {
   if (!Number.isFinite(config.minNoteHeightPx) || config.minNoteHeightPx <= 0) {
     throw new Error('Note rain layout minNoteHeightPx must be a positive number.');
   }
+
+  if (!Number.isFinite(config.maxVisibleNotes) || config.maxVisibleNotes <= 0) {
+    throw new Error('Note rain layout maxVisibleNotes must be a positive number.');
+  }
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max);
 }

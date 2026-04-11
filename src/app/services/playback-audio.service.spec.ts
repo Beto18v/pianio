@@ -2,10 +2,12 @@ import { TestBed } from '@angular/core/testing';
 import { MockInstance, vi } from 'vitest';
 
 import { MidiSong } from '../domain/models/midi-song.model';
+import { FrameBudgetService } from './frame-budget.service';
 import { PlaybackAudioService } from './playback-audio.service';
 import { PlaybackService } from './playback.service';
 
 describe('PlaybackAudioService', () => {
+  let frameBudgetService: FrameBudgetService;
   let playbackService: PlaybackService;
   let playbackAudioService: PlaybackAudioService;
   let nowSpy: MockInstance<() => number>;
@@ -34,6 +36,7 @@ describe('PlaybackAudioService', () => {
     );
 
     TestBed.configureTestingModule({});
+    frameBudgetService = TestBed.inject(FrameBudgetService);
     playbackService = TestBed.inject(PlaybackService);
     playbackAudioService = TestBed.inject(PlaybackAudioService);
   });
@@ -131,6 +134,41 @@ describe('PlaybackAudioService', () => {
 
     const startsAfterSongChange = FakeAudioContext.lastInstance?.oscillatorStartCount ?? 0;
     expect(startsAfterSongChange).toBe(4);
+  });
+
+  it('respects adaptive polyphony cap under frame pressure', () => {
+    const denseChordSong: MidiSong = {
+      ...song,
+      duration: 1,
+      notes: [
+        { pitch: 60, velocity: 0.9, startTime: 0, duration: 0.5, track: 0 },
+        { pitch: 62, velocity: 0.9, startTime: 0, duration: 0.5, track: 0 },
+        { pitch: 64, velocity: 0.9, startTime: 0, duration: 0.5, track: 0 },
+        { pitch: 65, velocity: 0.9, startTime: 0, duration: 0.5, track: 0 },
+        { pitch: 67, velocity: 0.9, startTime: 0, duration: 0.5, track: 0 },
+        { pitch: 69, velocity: 0.9, startTime: 0, duration: 0.5, track: 0 },
+        { pitch: 71, velocity: 0.9, startTime: 0, duration: 0.5, track: 0 },
+        { pitch: 72, velocity: 0.9, startTime: 0, duration: 0.5, track: 0 },
+      ],
+    };
+
+    playbackService.setSong(denseChordSong);
+
+    let timestamp = 0;
+    frameBudgetService.recordFrame(timestamp);
+
+    for (let frame = 0; frame < 120; frame += 1) {
+      timestamp += 33;
+      frameBudgetService.recordFrame(timestamp);
+    }
+
+    const adaptiveCap = frameBudgetService.guardrails().polyphonyCap;
+    expect(adaptiveCap).toBeLessThan(10);
+
+    playbackService.play();
+    TestBed.flushEffects();
+
+    expect(FakeAudioContext.lastInstance?.oscillatorStartCount).toBe(adaptiveCap);
   });
 });
 

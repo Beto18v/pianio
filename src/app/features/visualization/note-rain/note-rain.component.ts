@@ -14,6 +14,7 @@ import { NoteAnnotationMap } from '../../../domain/models/note-annotation.model'
 import { MidiSong } from '../../../domain/models/midi-song.model';
 import { createSongNoteIndex } from '../../../domain/utils/song-note-index.util';
 import { SongAnalysisService } from '../../../services/song-analysis.service';
+import { FrameBudgetService } from '../../../services/frame-budget.service';
 import { KeyboardLayout } from '../models/keyboard-layout.model';
 import { MVP_KEYBOARD_LAYOUT } from '../utils/keyboard-layout.util';
 import { DEFAULT_NOTE_RAIN_LAYOUT_CONFIG, createNoteRainLayout } from '../utils/note-rain.util';
@@ -30,6 +31,7 @@ export class NoteRainComponent implements AfterViewInit {
 
   protected readonly site = siteContent;
   private readonly songAnalysisService = inject(SongAnalysisService);
+  private readonly frameBudgetService = inject(FrameBudgetService);
   private readonly hostElement = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly viewportHeightState = signal(DEFAULT_NOTE_RAIN_LAYOUT_CONFIG.viewportHeightPx);
@@ -61,6 +63,7 @@ export class NoteRainComponent implements AfterViewInit {
       {
         ...DEFAULT_NOTE_RAIN_LAYOUT_CONFIG,
         viewportHeightPx: this.viewportHeightState(),
+        maxVisibleNotes: this.frameBudgetService.guardrails().visibleNoteCap,
       },
       this.keyboardLayout(),
       this.songIndex(),
