@@ -46,27 +46,33 @@
     <dl class="practice-hud__stats practice-hud__stats--performance">
       <div>
         <dt>{{ site.playback.performance.fields.frameBudget }}</dt>
-        <dd>{{ frameBudgetSnapshot().targetFrameMs | number: '1.0-2' }} ms</dd>
+        <dd id="performance-frame-budget-value">
+          {{ frameBudgetSnapshot().targetFrameMs | number: '1.0-2' }} ms
+        </dd>
       </div>
       <div>
         <dt>{{ site.playback.performance.fields.averageFrame }}</dt>
-        <dd>{{ frameBudgetSnapshot().averageFrameMs | number: '1.0-2' }} ms</dd>
+        <dd id="performance-average-frame-value">
+          {{ frameBudgetSnapshot().averageFrameMs | number: '1.0-2' }} ms
+        </dd>
       </div>
       <div>
         <dt>{{ site.playback.performance.fields.longFrames }}</dt>
-        <dd>{{ longFramePercent() }}%</dd>
+        <dd id="performance-long-frames-value">{{ longFramePercent() }}%</dd>
       </div>
       <div>
         <dt>{{ site.playback.performance.fields.visibleNoteCap }}</dt>
-        <dd>{{ adaptiveGuardrails().visibleNoteCap }}</dd>
+        <dd id="performance-visible-note-cap-value">{{ adaptiveGuardrails().visibleNoteCap }}</dd>
       </div>
       <div>
         <dt>{{ site.playback.performance.fields.polyphonyCap }}</dt>
-        <dd>{{ adaptiveGuardrails().polyphonyCap }}</dd>
+        <dd id="performance-polyphony-cap-value">{{ adaptiveGuardrails().polyphonyCap }}</dd>
       </div>
       <div>
         <dt>{{ site.playback.performance.fields.guardrailMode }}</dt>
-        <dd class="practice-hud__chip">{{ guardrailModeLabel() }}</dd>
+        <dd id="performance-guardrail-mode-value" class="practice-hud__chip">
+          {{ guardrailModeLabel() }}
+        </dd>
       </div>
     </dl>
   </section>

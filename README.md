@@ -98,7 +98,7 @@ High-level data flow:
 - `npm start` → `ng serve`
 - `npm run build` → production build
 - `npm test` → unit tests
-- `npm run e2e` → Playwright smoke tests (headless)
+- `npm run e2e` → Playwright smoke tests (headless, includes dense-song seek/guardrail profile)
 - `npm run e2e:ui` → Playwright UI mode
 
 ### Planning docs
@@ -199,7 +199,7 @@ Flujo de datos principal:
 - `npm start` → `ng serve`
 - `npm run build` → build de producción
 - `npm test` → unit tests
-- `npm run e2e` → smoke tests E2E con Playwright (headless)
+- `npm run e2e` → smoke tests E2E con Playwright (headless, incluye perfil denso con seeks/guardrails)
 - `npm run e2e:ui` → Playwright en modo UI
 
 ### Planning
