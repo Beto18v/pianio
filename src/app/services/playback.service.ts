@@ -4,10 +4,15 @@ import { MidiSong } from '../domain/models/midi-song.model';
 import { PlaybackState } from '../domain/models/playback-state.model';
 import { FrameBudgetService } from './frame-budget.service';
 
+export const MIN_PLAYBACK_RATE = 0.2;
+export const MAX_PLAYBACK_RATE = 2;
+export const DEFAULT_PLAYBACK_RATE = 1;
+
 const INITIAL_PLAYBACK_STATE: PlaybackState = {
   isPlaying: false,
   currentTime: 0,
   duration: 0,
+  playbackRate: DEFAULT_PLAYBACK_RATE,
 };
 
 @Injectable({
@@ -30,6 +35,7 @@ export class PlaybackService {
   setSong(song: MidiSong | null): void {
     this.cancelFrame();
     this.frameBudgetService.clearSamples();
+    const playbackRate = this.playbackStateState().playbackRate;
     this.songState.set(song);
     this.playbackAnchorTimeMs = null;
     this.anchorSongTime = 0;
@@ -37,7 +43,35 @@ export class PlaybackService {
       isPlaying: false,
       currentTime: 0,
       duration: song?.duration ?? 0,
+      playbackRate,
     });
+  }
+
+  setPlaybackRate(nextPlaybackRate: number): void {
+    if (!Number.isFinite(nextPlaybackRate)) {
+      return;
+    }
+
+    const clampedPlaybackRate = clampPlaybackRate(nextPlaybackRate);
+    const state = this.playbackStateState();
+
+    if (Math.abs(state.playbackRate - clampedPlaybackRate) < 0.0001) {
+      return;
+    }
+
+    if (state.isPlaying) {
+      const now = performance.now();
+
+      this.syncCurrentTime(now);
+      this.anchorSongTime = this.playbackStateState().currentTime;
+      this.playbackAnchorTimeMs = now;
+      this.frameBudgetService.resetFrameClock();
+    }
+
+    this.playbackStateState.update((current) => ({
+      ...current,
+      playbackRate: clampedPlaybackRate,
+    }));
   }
 
   play(): void {
@@ -133,7 +167,7 @@ export class PlaybackService {
     }
 
     const anchorTimeMs = this.playbackAnchorTimeMs ?? timestamp;
-    const elapsedSeconds = Math.max(0, (timestamp - anchorTimeMs) / 1000);
+    const elapsedSeconds = Math.max(0, (timestamp - anchorTimeMs) / 1000) * state.playbackRate;
     const nextTime = clampTime(this.anchorSongTime + elapsedSeconds, state.duration);
 
     if (nextTime >= state.duration) {
@@ -177,4 +211,8 @@ function clampTime(time: number, duration: number): number {
   }
 
   return Math.min(Math.max(time, 0), duration);
+}
+
+function clampPlaybackRate(playbackRate: number): number {
+  return Math.min(Math.max(playbackRate, MIN_PLAYBACK_RATE), MAX_PLAYBACK_RATE);
 }

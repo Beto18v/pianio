@@ -52,6 +52,7 @@ describe('PlaybackService', () => {
       isPlaying: false,
       currentTime: 0,
       duration: 2,
+      playbackRate: 1,
     });
   });
 
@@ -81,6 +82,7 @@ describe('PlaybackService', () => {
       isPlaying: false,
       currentTime: 2,
       duration: 2,
+      playbackRate: 1,
     });
   });
 
@@ -95,6 +97,24 @@ describe('PlaybackService', () => {
 
     service.seek(-5);
     expect(service.playbackState().currentTime).toBe(0);
+  });
+
+  it('applies playbackRate scaling when tempo is adjusted', () => {
+    service.setSong(song);
+    service.setPlaybackRate(0.5);
+    service.play();
+
+    runFrame(1000);
+
+    expect(service.playbackState().playbackRate).toBe(0.5);
+    expect(service.playbackState().currentTime).toBe(0.5);
+
+    nowSpy.mockReturnValue(1000);
+    service.setPlaybackRate(2);
+    runFrame(1500);
+
+    expect(service.playbackState().playbackRate).toBe(2);
+    expect(service.playbackState().currentTime).toBe(1.5);
   });
 
   function runFrame(timestamp: number): void {

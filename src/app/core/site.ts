@@ -168,6 +168,16 @@ export const siteContent = {
     description:
       'Controla el transporte, sigue el estado del wait mode y revisa el match contra tu teclado actual.',
     idleState: 'Carga un archivo MIDI para habilitar el transporte y la practica.',
+    tempo: {
+      title: 'Tempo',
+      hint: 'Ajusta la velocidad de reproduccion (20% a 200%).',
+      fields: {
+        scale: 'Escala',
+        midiBpm: 'BPM MIDI',
+        effectiveBpm: 'BPM efectivo',
+      },
+      unknownBpm: 'No disponible',
+    },
     performance: {
       title: 'Rendimiento',
       fields: {

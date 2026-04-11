@@ -3,7 +3,7 @@ import { Injectable, effect, inject } from '@angular/core';
 import { MidiSong } from '../domain/models/midi-song.model';
 import { NoteEvent } from '../domain/models/note-event.model';
 import { BASE_POLYPHONY_CAP, FrameBudgetService } from './frame-budget.service';
-import { PlaybackService } from './playback.service';
+import { MAX_PLAYBACK_RATE, MIN_PLAYBACK_RATE, PlaybackService } from './playback.service';
 
 const LOOKAHEAD_SECONDS = 0.12;
 const SCHEDULE_LEAD_SECONDS = 0.003;
@@ -49,13 +49,19 @@ export class PlaybackAudioService {
   private lastTransportTime = 0;
   private songTimeAnchor = 0;
   private audioTimeAnchor = 0;
+  private transportPlaybackRate = 1;
 
   constructor() {
     effect(() => {
       const song = this.playbackService.song();
       const playbackState = this.playbackService.playbackState();
 
-      this.syncWithTransport(song, playbackState.currentTime, playbackState.isPlaying);
+      this.syncWithTransport(
+        song,
+        playbackState.currentTime,
+        playbackState.isPlaying,
+        playbackState.playbackRate,
+      );
     });
   }
 
@@ -69,22 +75,30 @@ export class PlaybackAudioService {
     await audioContext.resume();
   }
 
-  private syncWithTransport(song: MidiSong | null, currentTime: number, isPlaying: boolean): void {
+  private syncWithTransport(
+    song: MidiSong | null,
+    currentTime: number,
+    isPlaying: boolean,
+    playbackRate: number,
+  ): void {
+    const safePlaybackRate = clampPlaybackRate(playbackRate);
+
     if (!song) {
       this.stopAllVoices();
-      this.resetSchedulerState(null, 0, false);
+      this.resetSchedulerState(null, 0, false, safePlaybackRate);
       return;
     }
 
     const safeCurrentTime = clampSongTime(currentTime, song.duration);
     const songChanged = song !== this.scheduledSong;
+    const playbackRateChanged = Math.abs(safePlaybackRate - this.transportPlaybackRate) > 0.0001;
 
     if (!isPlaying) {
       if (this.wasPlaying || songChanged) {
         this.stopAllVoices();
       }
 
-      this.resetSchedulerState(song, safeCurrentTime, false);
+      this.resetSchedulerState(song, safeCurrentTime, false, safePlaybackRate);
       return;
     }
 
@@ -94,14 +108,17 @@ export class PlaybackAudioService {
       return;
     }
 
-    this.updateAudioAnchor(safeCurrentTime, audioContext.currentTime);
+    this.updateAudioAnchor(safeCurrentTime, audioContext.currentTime, safePlaybackRate);
 
     const needsRehydrate =
-      songChanged || !this.wasPlaying || hasTransportJump(this.lastTransportTime, safeCurrentTime);
+      songChanged ||
+      playbackRateChanged ||
+      !this.wasPlaying ||
+      hasTransportJump(this.lastTransportTime, safeCurrentTime);
 
     if (needsRehydrate) {
       this.stopAllVoices();
-      this.resetSchedulerState(song, safeCurrentTime, true);
+      this.resetSchedulerState(song, safeCurrentTime, true, safePlaybackRate);
       this.rehydrateActiveNotes(song, safeCurrentTime, audioContext);
     }
 
@@ -115,6 +132,7 @@ export class PlaybackAudioService {
     song: MidiSong | null,
     currentTime: number,
     isPlaying: boolean,
+    playbackRate: number,
   ): void {
     this.scheduledSong = song;
     this.songCursor = song ? findFirstNoteStartingAtOrAfter(song.notes, currentTime) : 0;
@@ -123,15 +141,17 @@ export class PlaybackAudioService {
     this.wasPlaying = isPlaying;
     this.lastTransportTime = currentTime;
     this.songTimeAnchor = currentTime;
+    this.transportPlaybackRate = clampPlaybackRate(playbackRate);
 
     if (this.audioContext) {
       this.audioTimeAnchor = this.audioContext.currentTime;
     }
   }
 
-  private updateAudioAnchor(songTime: number, audioTime: number): void {
+  private updateAudioAnchor(songTime: number, audioTime: number, playbackRate: number): void {
     this.songTimeAnchor = songTime;
     this.audioTimeAnchor = audioTime;
+    this.transportPlaybackRate = clampPlaybackRate(playbackRate);
   }
 
   private rehydrateActiveNotes(
@@ -231,7 +251,7 @@ export class PlaybackAudioService {
   }
 
   private mapSongTimeToAudioTime(songTime: number): number {
-    return this.audioTimeAnchor + (songTime - this.songTimeAnchor);
+    return this.audioTimeAnchor + (songTime - this.songTimeAnchor) / this.transportPlaybackRate;
   }
 
   private scheduleVoice(
@@ -452,6 +472,10 @@ function velocityToGain(velocity: number): number {
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
+}
+
+function clampPlaybackRate(playbackRate: number): number {
+  return clamp(playbackRate, MIN_PLAYBACK_RATE, MAX_PLAYBACK_RATE);
 }
 
 function midiToFrequency(pitch: number): number {

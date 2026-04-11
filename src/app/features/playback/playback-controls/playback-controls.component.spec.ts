@@ -129,4 +129,28 @@ describe('PlaybackControlsComponent', () => {
     expect(playbackService.playbackState().isPlaying).toBe(true);
     expect(compiled.textContent).toContain('Avanzando');
   });
+
+  it('forwards tempo slider changes to playback rate', async () => {
+    playbackService.setSong({
+      fileName: 'tempo.mid',
+      duration: 3,
+      tempoBpm: 120,
+      ppq: 480,
+      trackCount: 1,
+      notes: [{ pitch: 60, velocity: 0.8, startTime: 0, duration: 1, track: 0 }],
+    });
+
+    const setPlaybackRateSpy = vi.spyOn(playbackService, 'setPlaybackRate');
+    const fixture = TestBed.createComponent(PlaybackControlsComponent);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const tempoSlider = compiled.querySelector('#playback-tempo-input') as HTMLInputElement;
+
+    tempoSlider.value = '80';
+    tempoSlider.dispatchEvent(new Event('input'));
+
+    expect(setPlaybackRateSpy).toHaveBeenCalledWith(0.8);
+  });
 });

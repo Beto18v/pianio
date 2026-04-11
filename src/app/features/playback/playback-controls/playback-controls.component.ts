@@ -6,7 +6,11 @@ import { KeyboardCalibrationService } from '../../../services/keyboard-calibrati
 import { MidiInputService } from '../../../services/midi-input.service';
 import { FrameBudgetService } from '../../../services/frame-budget.service';
 import { PlaybackAudioService } from '../../../services/playback-audio.service';
-import { PlaybackService } from '../../../services/playback.service';
+import {
+  MAX_PLAYBACK_RATE,
+  MIN_PLAYBACK_RATE,
+  PlaybackService,
+} from '../../../services/playback.service';
 import { PracticeService } from '../../../services/practice.service';
 
 @Component({
@@ -38,6 +42,29 @@ export class PlaybackControlsComponent {
   protected readonly connectionState = this.midiInputService.connectionState;
   protected readonly isMockMode = this.midiInputService.isMockMode;
   protected readonly isPracticeDetailsVisible = computed(() => this.isPracticeModeEnabled());
+  protected readonly minTempoPercent = Math.round(MIN_PLAYBACK_RATE * 100);
+  protected readonly maxTempoPercent = Math.round(MAX_PLAYBACK_RATE * 100);
+  protected readonly tempoScalePercent = computed(() =>
+    Math.round(this.playbackState().playbackRate * 100),
+  );
+  protected readonly midiTempoBpm = computed(() => {
+    const tempoBpm = this.song()?.tempoBpm;
+
+    if (typeof tempoBpm !== 'number' || !Number.isFinite(tempoBpm)) {
+      return null;
+    }
+
+    return tempoBpm;
+  });
+  protected readonly effectiveTempoBpm = computed(() => {
+    const midiTempoBpm = this.midiTempoBpm();
+
+    if (midiTempoBpm === null) {
+      return null;
+    }
+
+    return midiTempoBpm * this.playbackState().playbackRate;
+  });
   protected readonly hasExtraInputPitches = computed(
     () => this.practiceState().extraInputPitches.length > 0,
   );
@@ -158,6 +185,22 @@ export class PlaybackControlsComponent {
     }
 
     this.playbackService.seek(Number(input.value));
+  }
+
+  protected onTempoScaleInput(event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+
+    if (!input) {
+      return;
+    }
+
+    const tempoPercent = Number(input.value);
+
+    if (!Number.isFinite(tempoPercent)) {
+      return;
+    }
+
+    this.playbackService.setPlaybackRate(tempoPercent / 100);
   }
 
   protected formatPitchList(pitches: ReadonlyArray<number>): string {
