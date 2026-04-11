@@ -17,8 +17,8 @@ import { PlaybackService } from './services/playback.service';
 
 type AppFlowStep = 'welcome' | 'calibration' | 'main';
 
-const KEY_GUIDE_LOOKAHEAD_SECONDS = 0.16;
-const KEY_GUIDE_LOOKBEHIND_SECONDS = 0.045;
+const KEY_GUIDE_START_TOLERANCE_SECONDS = 0.01;
+const KEY_GUIDE_RELEASE_TOLERANCE_SECONDS = 0.025;
 
 @Component({
   selector: 'app-root',
@@ -65,18 +65,26 @@ export class App {
       return new Set<number>();
     }
 
-    const windowStart = Math.max(0, currentTime - KEY_GUIDE_LOOKBEHIND_SECONDS);
-    const windowEnd = Math.min(song.duration, currentTime + KEY_GUIDE_LOOKAHEAD_SECONDS);
+    const searchWindowStart = Math.max(
+      0,
+      currentTime - noteIndex.maxNoteDurationSeconds - KEY_GUIDE_RELEASE_TOLERANCE_SECONDS,
+    );
+    const searchWindowEnd = Math.min(song.duration, currentTime + KEY_GUIDE_START_TOLERANCE_SECONDS);
 
-    if (windowEnd < windowStart) {
+    if (searchWindowEnd < searchWindowStart) {
       return new Set<number>();
     }
 
-    const arrivingNotes = getNotesStartingInRange(noteIndex, windowStart, windowEnd);
+    const candidateNotes = getNotesStartingInRange(noteIndex, searchWindowStart, searchWindowEnd);
     const guidePitches = new Set<number>();
 
-    for (const note of arrivingNotes) {
-      if (Number.isFinite(note.pitch)) {
+    for (const note of candidateNotes) {
+      const noteEnd = note.startTime + note.duration;
+      const isNoteGuidedNow =
+        currentTime + KEY_GUIDE_START_TOLERANCE_SECONDS >= note.startTime &&
+        currentTime <= noteEnd + KEY_GUIDE_RELEASE_TOLERANCE_SECONDS;
+
+      if (isNoteGuidedNow && Number.isFinite(note.pitch)) {
         guidePitches.add(note.pitch);
       }
     }

@@ -129,6 +129,9 @@ describe('App', () => {
     fixture.detectChanges();
 
     const noteRainNotes = compiled.querySelectorAll('.note-rain__note');
+    const guidedWhiteKey = compiled.querySelector(
+      '.stage-keyboard__key--white[data-pitch="60"]',
+    ) as HTMLElement | null;
     const playbackPosition = compiled.querySelector(
       '#playback-position-input',
     ) as HTMLInputElement | null;
@@ -137,6 +140,66 @@ describe('App', () => {
     expect(compiled.textContent).toContain('Cargar MIDI');
     expect(playbackPosition?.max).toBe('0.5');
     expect(noteRainNotes).toHaveLength(1);
+    expect(guidedWhiteKey?.classList.contains('stage-keyboard__key--guide-white')).toBe(true);
+  });
+
+  it('keeps a black guide key highlighted while a sustained note is active', async () => {
+    const parsedSong: MidiSong = {
+      fileName: 'sharp-sustain.mid',
+      notes: [{ pitch: 61, velocity: 0.8, startTime: 0, duration: 1, track: 0 }],
+      duration: 1,
+      tempoBpm: 120,
+      ppq: 480,
+      trackCount: 1,
+    };
+
+    parserService.parse.mockReturnValue(parsedSong);
+
+    const fixture = TestBed.createComponent(App);
+
+    await moveToCalibration(fixture);
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const confirmButton = compiled.querySelector(
+      '#calibration-confirm-button',
+    ) as HTMLButtonElement | null;
+
+    confirmButton?.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const input = compiled.querySelector('#midi-file-input') as HTMLInputElement;
+    const file = new File([new Uint8Array([77, 84, 104, 100])], 'sharp-sustain.mid', {
+      type: 'audio/midi',
+    });
+
+    Object.defineProperty(input, 'files', {
+      configurable: true,
+      value: createFileList(file),
+    });
+
+    input.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const playbackPosition = compiled.querySelector(
+      '#playback-position-input',
+    ) as HTMLInputElement | null;
+
+    if (!playbackPosition) {
+      throw new Error('Expected playback position slider to be rendered.');
+    }
+
+    playbackPosition.value = '0.5';
+    playbackPosition.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const guidedBlackKey = compiled.querySelector(
+      '.stage-keyboard__key--black[data-pitch="61"]',
+    ) as HTMLElement | null;
+
+    expect(guidedBlackKey?.classList.contains('stage-keyboard__key--guide-black')).toBe(true);
   });
 });
 
