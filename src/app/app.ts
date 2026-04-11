@@ -69,7 +69,10 @@ export class App {
       0,
       currentTime - noteIndex.maxNoteDurationSeconds - KEY_GUIDE_RELEASE_TOLERANCE_SECONDS,
     );
-    const searchWindowEnd = Math.min(song.duration, currentTime + KEY_GUIDE_START_TOLERANCE_SECONDS);
+    const searchWindowEnd = Math.min(
+      song.duration,
+      currentTime + KEY_GUIDE_START_TOLERANCE_SECONDS,
+    );
 
     if (searchWindowEnd < searchWindowStart) {
       return new Set<number>();
