@@ -2,6 +2,7 @@ import { Component, computed, effect, inject, signal } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 
 import { MidiSong } from './domain/models/midi-song.model';
+import { createSongNoteIndex, getNotesStartingInRange } from './domain/utils/song-note-index.util';
 import { MidiInputMonitorComponent } from './features/midi-input/midi-input-monitor.component';
 import { PlaybackControlsComponent } from './features/playback/playback-controls/playback-controls.component';
 import { MidiUploadComponent } from './features/midi-upload/midi-upload.component';
@@ -15,6 +16,9 @@ import { MidiInputService } from './services/midi-input.service';
 import { PlaybackService } from './services/playback.service';
 
 type AppFlowStep = 'welcome' | 'calibration' | 'main';
+
+const KEY_GUIDE_LOOKAHEAD_SECONDS = 0.16;
+const KEY_GUIDE_LOOKBEHIND_SECONDS = 0.045;
 
 @Component({
   selector: 'app-root',
@@ -42,6 +46,43 @@ export class App {
   protected readonly currentSong = this.playbackService.song;
   protected readonly playbackState = this.playbackService.playbackState;
   protected readonly activeInputPitches = this.midiInputService.activePitches;
+  private readonly songNoteIndex = computed(() => {
+    const song = this.currentSong();
+
+    return song ? createSongNoteIndex(song.notes) : null;
+  });
+  protected readonly guideSongPitches = computed<ReadonlySet<number>>(() => {
+    const song = this.currentSong();
+    const noteIndex = this.songNoteIndex();
+
+    if (!song || !noteIndex) {
+      return new Set<number>();
+    }
+
+    const currentTime = this.playbackState().currentTime;
+
+    if (!Number.isFinite(currentTime)) {
+      return new Set<number>();
+    }
+
+    const windowStart = Math.max(0, currentTime - KEY_GUIDE_LOOKBEHIND_SECONDS);
+    const windowEnd = Math.min(song.duration, currentTime + KEY_GUIDE_LOOKAHEAD_SECONDS);
+
+    if (windowEnd < windowStart) {
+      return new Set<number>();
+    }
+
+    const arrivingNotes = getNotesStartingInRange(noteIndex, windowStart, windowEnd);
+    const guidePitches = new Set<number>();
+
+    for (const note of arrivingNotes) {
+      if (Number.isFinite(note.pitch)) {
+        guidePitches.add(note.pitch);
+      }
+    }
+
+    return guidePitches;
+  });
   protected readonly connectionState = this.midiInputService.connectionState;
   protected readonly keyboardCalibrationState = this.keyboardCalibrationService.state;
   protected readonly keyboardLayout = this.keyboardCalibrationService.keyboardLayout;

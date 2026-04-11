@@ -5,6 +5,7 @@
     @for (key of whiteKeys(); track key.pitch) {
       <div
         class="stage-keyboard__key stage-keyboard__key--white"
+        [class.stage-keyboard__key--guide-white]="guidePitches().has(key.pitch)"
         [class.stage-keyboard__key--active-white]="activePitches().has(key.pitch)"
         [attr.data-pitch]="key.pitch"
         [style.left]="getKeyStyle(key).left"
@@ -21,6 +22,7 @@
     @for (key of blackKeys(); track key.pitch) {
       <div
         class="stage-keyboard__key stage-keyboard__key--black"
+        [class.stage-keyboard__key--guide-black]="guidePitches().has(key.pitch)"
         [class.stage-keyboard__key--active-black]="activePitches().has(key.pitch)"
         [attr.data-pitch]="key.pitch"
         [style.left]="getKeyStyle(key).left"

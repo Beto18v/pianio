@@ -49,4 +49,18 @@ describe('PianoKeyboardComponent', () => {
     expect(c4?.classList.contains('stage-keyboard__key--active-white')).toBe(true);
     expect(cSharp4?.classList.contains('stage-keyboard__key--active-black')).toBe(true);
   });
+
+  it('highlights guide keys when song notes are arriving', async () => {
+    const fixture = TestBed.createComponent(PianoKeyboardComponent);
+    fixture.componentRef.setInput('guidePitches', new Set([62, 63]));
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const d4 = compiled.querySelector('.stage-keyboard__key--white[data-pitch="62"]');
+    const dSharp4 = compiled.querySelector('.stage-keyboard__key--black[data-pitch="63"]');
+
+    expect(d4?.classList.contains('stage-keyboard__key--guide-white')).toBe(true);
+    expect(dSharp4?.classList.contains('stage-keyboard__key--guide-black')).toBe(true);
+  });
 });

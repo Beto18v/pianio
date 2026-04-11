@@ -34,7 +34,11 @@
         </aside>
 
         <div class="immersive-shell__keyboard">
-          <app-piano-keyboard [layout]="keyboardLayout()" [activePitches]="activeInputPitches()" />
+          <app-piano-keyboard
+            [layout]="keyboardLayout()"
+            [activePitches]="activeInputPitches()"
+            [guidePitches]="guideSongPitches()"
+          />
         </div>
       </div>
     </section>

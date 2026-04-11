@@ -12,6 +12,7 @@ import { MVP_KEYBOARD_LAYOUT } from '../utils/keyboard-layout.util';
 export class PianoKeyboardComponent {
   readonly layout = input<KeyboardLayout>(MVP_KEYBOARD_LAYOUT);
   readonly activePitches = input<ReadonlySet<number>>(new Set<number>());
+  readonly guidePitches = input<ReadonlySet<number>>(new Set<number>());
 
   protected readonly site = siteContent;
   protected readonly whiteKeys = computed(() => this.layout().keys.filter((key) => !key.isBlack));
