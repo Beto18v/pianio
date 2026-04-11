@@ -10,8 +10,10 @@ import {
 } from '@angular/core';
 
 import { siteContent } from '../../../core/site';
+import { NoteAnnotationMap } from '../../../domain/models/note-annotation.model';
 import { MidiSong } from '../../../domain/models/midi-song.model';
 import { createSongNoteIndex } from '../../../domain/utils/song-note-index.util';
+import { SongAnalysisService } from '../../../services/song-analysis.service';
 import { KeyboardLayout } from '../models/keyboard-layout.model';
 import { MVP_KEYBOARD_LAYOUT } from '../utils/keyboard-layout.util';
 import { DEFAULT_NOTE_RAIN_LAYOUT_CONFIG, createNoteRainLayout } from '../utils/note-rain.util';
@@ -27,9 +29,19 @@ export class NoteRainComponent implements AfterViewInit {
   readonly keyboardLayout = input<KeyboardLayout>(MVP_KEYBOARD_LAYOUT);
 
   protected readonly site = siteContent;
+  private readonly songAnalysisService = inject(SongAnalysisService);
   private readonly hostElement = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly viewportHeightState = signal(DEFAULT_NOTE_RAIN_LAYOUT_CONFIG.viewportHeightPx);
+  private readonly noteAnnotations = computed<NoteAnnotationMap>(() => {
+    const song = this.song();
+
+    if (!song) {
+      return {};
+    }
+
+    return this.songAnalysisService.analyze(song).noteAnnotations;
+  });
   private readonly songIndex = computed(() => {
     const song = this.song();
 
@@ -52,6 +64,7 @@ export class NoteRainComponent implements AfterViewInit {
       },
       this.keyboardLayout(),
       this.songIndex(),
+      this.noteAnnotations(),
     );
   });
   protected readonly accessibleLabel = computed(() => {

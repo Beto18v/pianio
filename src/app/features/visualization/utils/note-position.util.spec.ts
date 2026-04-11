@@ -1,5 +1,7 @@
 import { MidiSong } from '../../../domain/models/midi-song.model';
 import { NoteEvent } from '../../../domain/models/note-event.model';
+import { createNoteKey } from '../../../domain/utils/note-key.util';
+import { MVP_KEYBOARD_LAYOUT } from './keyboard-layout.util';
 import {
   DEFAULT_NOTE_ROLL_LAYOUT_CONFIG,
   createNoteRollLayout,
@@ -70,6 +72,40 @@ describe('note-position.util', () => {
     expect(layout.hiddenNoteCount).toBe(1);
     expect(layout.notes.map((note) => note.pitch)).toEqual([60, 64]);
     expect(layout.totalHeightPx).toBeCloseTo(528, 5);
+  });
+
+  it('attaches hand and fingering annotations when available', () => {
+    const note: NoteEvent = {
+      pitch: 64,
+      velocity: 0.8,
+      startTime: 0,
+      duration: 0.5,
+      track: 0,
+    };
+    const song: MidiSong = {
+      fileName: 'annotated.mid',
+      duration: 1,
+      tempoBpm: 100,
+      ppq: 480,
+      trackCount: 1,
+      notes: [note],
+    };
+    const noteAnnotations = {
+      [createNoteKey(note)]: {
+        hand: 'right' as const,
+        finger: 4 as const,
+      },
+    };
+
+    const layout = createNoteRollLayout(
+      song,
+      DEFAULT_NOTE_ROLL_LAYOUT_CONFIG,
+      MVP_KEYBOARD_LAYOUT,
+      noteAnnotations,
+    );
+
+    expect(layout.notes[0]?.hand).toBe('right');
+    expect(layout.notes[0]?.finger).toBe(4);
   });
 
   it('rejects invalid layout configuration values', () => {

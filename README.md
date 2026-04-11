@@ -23,6 +23,7 @@ This repository is split into:
 - **Minimal audio playback** via Web Audio (intentionally simple; useful for timing verification).
 - **Web MIDI input** (`noteOn`/`noteOff`) with a defensive **mock mode** fallback when hardware or Web MIDI is unavailable.
 - **Practice mode / wait mode**: when enabled, playback pauses on mismatch and resumes when the expected pitches are satisfied.
+- **Hand/fingering baseline analysis** available in note layouts (`hand` + chord-level fingering suggestion).
 
 ### Tech stack
 
@@ -119,6 +120,7 @@ See `../pianoflow-planning/` for:
 - **Audio mínimo** con Web Audio (a propósito simple; útil para validar timing).
 - **Entrada Web MIDI** (`noteOn`/`noteOff`) con **modo simulado** cuando no hay hardware o no existe Web MIDI.
 - **Modo práctica / wait mode**: cuando está activo, la reproducción se pausa si falta match y se reanuda al coincidir.
+- **Analisis baseline de mano/digitacion** disponible en layouts de notas (`hand` + sugerencia de digitacion de acordes).
 
 ### Stack
 

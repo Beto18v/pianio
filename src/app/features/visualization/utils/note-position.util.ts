@@ -1,5 +1,7 @@
 import { MidiSong } from '../../../domain/models/midi-song.model';
+import { NoteAnnotation, NoteAnnotationMap } from '../../../domain/models/note-annotation.model';
 import { NoteEvent } from '../../../domain/models/note-event.model';
+import { createNoteKey } from '../../../domain/utils/note-key.util';
 import { KeyboardLayout } from '../models/keyboard-layout.model';
 import { NoteRollLayout } from '../models/note-roll-layout.model';
 import { PositionedNote } from '../models/positioned-note.model';
@@ -21,6 +23,7 @@ export function getPositionedNote(
   note: NoteEvent,
   config: NoteRollLayoutConfig = DEFAULT_NOTE_ROLL_LAYOUT_CONFIG,
   keyboardLayout: KeyboardLayout = MVP_KEYBOARD_LAYOUT,
+  noteAnnotation: NoteAnnotation | null = null,
 ): PositionedNote | null {
   validateLayoutConfig(config);
 
@@ -36,6 +39,8 @@ export function getPositionedNote(
     startTime: note.startTime,
     duration: note.duration,
     track: note.track,
+    hand: noteAnnotation?.hand ?? 'unknown',
+    finger: noteAnnotation?.finger ?? null,
     leftPercent: horizontalPosition.leftPercent,
     widthPercent: horizontalPosition.widthPercent,
     topPx: note.startTime * config.pixelsPerSecond,
@@ -48,11 +53,14 @@ export function createNoteRollLayout(
   song: MidiSong,
   config: NoteRollLayoutConfig = DEFAULT_NOTE_ROLL_LAYOUT_CONFIG,
   keyboardLayout: KeyboardLayout = MVP_KEYBOARD_LAYOUT,
+  noteAnnotations: NoteAnnotationMap = {},
 ): NoteRollLayout {
   validateLayoutConfig(config);
 
   const notes = song.notes
-    .map((note) => getPositionedNote(note, config, keyboardLayout))
+    .map((note) =>
+      getPositionedNote(note, config, keyboardLayout, noteAnnotations[createNoteKey(note)] ?? null),
+    )
     .filter((note): note is PositionedNote => note !== null);
 
   return {

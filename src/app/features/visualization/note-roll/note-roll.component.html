@@ -59,6 +59,8 @@
                   [class.note-roll-panel__note--black]="note.isBlack"
                   [class.note-roll-panel__note--active]="isNoteActive(note)"
                   [attr.data-pitch]="note.pitch"
+                  [attr.data-hand]="note.hand"
+                  [attr.data-finger]="note.finger ?? ''"
                   [style.left.%]="note.leftPercent"
                   [style.width.%]="note.widthPercent"
                   [style.top.px]="note.topPx"

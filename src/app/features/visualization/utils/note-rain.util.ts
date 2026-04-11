@@ -1,5 +1,12 @@
 import { MidiSong } from '../../../domain/models/midi-song.model';
+import {
+  NoteAnnotation,
+  NoteAnnotationMap,
+  NoteFinger,
+  NoteHand,
+} from '../../../domain/models/note-annotation.model';
 import { NoteEvent } from '../../../domain/models/note-event.model';
+import { createNoteKey } from '../../../domain/utils/note-key.util';
 import {
   SongNoteIndex,
   createSongNoteIndex,
@@ -21,6 +28,8 @@ export interface FallingNote {
   startTime: number;
   duration: number;
   track: number;
+  hand: NoteHand;
+  finger: NoteFinger;
   leftPercent: number;
   widthPercent: number;
   topPx: number;
@@ -47,6 +56,7 @@ export function getFallingNote(
   currentTime: number,
   config: NoteRainLayoutConfig = DEFAULT_NOTE_RAIN_LAYOUT_CONFIG,
   keyboardLayout: KeyboardLayout = MVP_KEYBOARD_LAYOUT,
+  noteAnnotation: NoteAnnotation | null = null,
 ): FallingNote | null {
   validateLayoutConfig(config);
 
@@ -75,6 +85,8 @@ export function getFallingNote(
     startTime: note.startTime,
     duration: note.duration,
     track: note.track,
+    hand: noteAnnotation?.hand ?? 'unknown',
+    finger: noteAnnotation?.finger ?? null,
     leftPercent: horizontalPosition.leftPercent,
     widthPercent: horizontalPosition.widthPercent,
     topPx,
@@ -90,6 +102,7 @@ export function createNoteRainLayout(
   config: NoteRainLayoutConfig = DEFAULT_NOTE_RAIN_LAYOUT_CONFIG,
   keyboardLayout: KeyboardLayout = MVP_KEYBOARD_LAYOUT,
   noteIndex: SongNoteIndex | null = null,
+  noteAnnotations: NoteAnnotationMap = {},
 ): NoteRainLayout {
   validateLayoutConfig(config);
 
@@ -98,7 +111,15 @@ export function createNoteRainLayout(
   const candidateNotes = getNotesStartingInRange(resolvedIndex, startTimeMin, startTimeMax);
 
   const notes = candidateNotes
-    .map((note) => getFallingNote(note, currentTime, config, keyboardLayout))
+    .map((note) =>
+      getFallingNote(
+        note,
+        currentTime,
+        config,
+        keyboardLayout,
+        noteAnnotations[createNoteKey(note)] ?? null,
+      ),
+    )
     .filter((note): note is FallingNote => note !== null);
 
   return {

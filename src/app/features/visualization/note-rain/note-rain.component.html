@@ -7,7 +7,10 @@
     ></div>
 
     <div class="note-rain__notes" aria-hidden="true">
-      @for (note of noteRainLayout.notes; track note.track + '-' + note.startTime + '-' + note.pitch) {
+      @for (
+        note of noteRainLayout.notes;
+        track note.track + '-' + note.startTime + '-' + note.pitch
+      ) {
         <div
           class="note-rain__note"
           [class.note-rain__note--black]="note.isBlack"
@@ -17,6 +20,8 @@
           [style.top.px]="note.topPx"
           [style.height.px]="note.heightPx"
           [attr.data-pitch]="note.pitch"
+          [attr.data-hand]="note.hand"
+          [attr.data-finger]="note.finger ?? ''"
         ></div>
       }
     </div>

@@ -1,5 +1,7 @@
 import { MidiSong } from '../../../domain/models/midi-song.model';
 import { NoteEvent } from '../../../domain/models/note-event.model';
+import { createNoteKey } from '../../../domain/utils/note-key.util';
+import { MVP_KEYBOARD_LAYOUT } from './keyboard-layout.util';
 import {
   DEFAULT_NOTE_RAIN_LAYOUT_CONFIG,
   createNoteRainLayout,
@@ -70,6 +72,42 @@ describe('note-rain.util', () => {
     expect(layout.hiddenNoteCount).toBe(2);
     expect(layout.hitLineTopPx).toBe(612);
     expect(layout.notes[0]?.pitch).toBe(60);
+  });
+
+  it('attaches hand and fingering annotations when available', () => {
+    const note: NoteEvent = {
+      pitch: 60,
+      velocity: 0.8,
+      startTime: 1,
+      duration: 0.5,
+      track: 0,
+    };
+    const song: MidiSong = {
+      fileName: 'annotated.mid',
+      duration: 2,
+      tempoBpm: 100,
+      ppq: 480,
+      trackCount: 1,
+      notes: [note],
+    };
+    const noteAnnotations = {
+      [createNoteKey(note)]: {
+        hand: 'left' as const,
+        finger: 5 as const,
+      },
+    };
+
+    const layout = createNoteRainLayout(
+      song,
+      1,
+      DEFAULT_NOTE_RAIN_LAYOUT_CONFIG,
+      MVP_KEYBOARD_LAYOUT,
+      null,
+      noteAnnotations,
+    );
+
+    expect(layout.notes[0]?.hand).toBe('left');
+    expect(layout.notes[0]?.finger).toBe(5);
   });
 
   it('rejects invalid layout configuration values', () => {

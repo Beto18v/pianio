@@ -1,8 +1,11 @@
 import { DecimalPipe } from '@angular/common';
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 
 import { siteContent } from '../../../core/site';
+import { NoteAnnotationMap } from '../../../domain/models/note-annotation.model';
 import { MidiSong } from '../../../domain/models/midi-song.model';
+import { createNoteKey } from '../../../domain/utils/note-key.util';
+import { SongAnalysisService } from '../../../services/song-analysis.service';
 import { NoteRollLayout } from '../models/note-roll-layout.model';
 import { PositionedNote } from '../models/positioned-note.model';
 import { KeyboardKey } from '../models/keyboard-key.model';
@@ -20,13 +23,30 @@ export class NoteRollComponent {
   readonly currentTime = input(0);
 
   protected readonly site = siteContent;
+  private readonly songAnalysisService = inject(SongAnalysisService);
   protected readonly keyboardLayout = MVP_KEYBOARD_LAYOUT;
   protected readonly noteRollLayoutConfig = DEFAULT_NOTE_ROLL_LAYOUT_CONFIG;
   protected readonly laneKeys = this.keyboardLayout.keys;
+  protected readonly noteAnnotations = computed<NoteAnnotationMap>(() => {
+    const song = this.song();
+
+    if (!song) {
+      return {};
+    }
+
+    return this.songAnalysisService.analyze(song).noteAnnotations;
+  });
   protected readonly noteRollLayout = computed<NoteRollLayout | null>(() => {
     const song = this.song();
 
-    return song ? createNoteRollLayout(song, this.noteRollLayoutConfig, this.keyboardLayout) : null;
+    return song
+      ? createNoteRollLayout(
+          song,
+          this.noteRollLayoutConfig,
+          this.keyboardLayout,
+          this.noteAnnotations(),
+        )
+      : null;
   });
   protected readonly clampedCurrentTime = computed(() => {
     const song = this.song();
@@ -88,7 +108,7 @@ export class NoteRollComponent {
   }
 
   protected getNoteKey(note: Pick<PositionedNote, 'track' | 'startTime' | 'pitch'>): string {
-    return `${note.track}-${note.startTime}-${note.pitch}`;
+    return createNoteKey(note);
   }
 }
 
