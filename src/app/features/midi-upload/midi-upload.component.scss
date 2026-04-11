@@ -33,6 +33,11 @@
   font-size: 0.82rem;
 }
 
+.upload-panel--compact .upload-panel__status--compact-annotation {
+  background: rgb(255 255 255 / 0.08);
+  color: rgb(233 240 236 / 0.86);
+}
+
 .upload-panel__header {
   display: flex;
   align-items: start;

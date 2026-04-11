@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 
 import {
   NoteAnnotation,
+  NoteAnnotationSourceCount,
   NoteAnnotationMap,
   NoteFinger,
   NoteHand,
@@ -18,6 +19,12 @@ interface NoteGroup {
   startTime: number;
   notes: ReadonlyArray<NoteEvent>;
 }
+
+const INITIAL_SOURCE_COUNT: NoteAnnotationSourceCount = {
+  file: 0,
+  inferred: 0,
+  unavailable: 0,
+};
 
 @Injectable({
   providedIn: 'root',
@@ -42,19 +49,42 @@ export class SongAnalysisService {
 
 function buildSongAnalysis(song: MidiSong): SongAnalysis {
   const notes = song.notes.filter(isAnalyzableNote);
+  const fileNoteAnnotations = song.fileNoteAnnotations ?? {};
   const groupedNotes = createNoteGroups(notes);
   const handByNoteKey = hasMultipleTracks(notes)
     ? assignHandsByTrack(song.notes)
     : assignHandsByPitchSplit(groupedNotes);
   const fingerByNoteKey = assignChordFingers(groupedNotes, handByNoteKey);
   const noteAnnotations: Record<string, NoteAnnotation> = {};
+  const handSources: NoteAnnotationSourceCount = { ...INITIAL_SOURCE_COUNT };
+  const fingerSources: NoteAnnotationSourceCount = { ...INITIAL_SOURCE_COUNT };
 
   for (const note of song.notes) {
     const noteKey = createNoteKey(note);
+    const fileAnnotation = fileNoteAnnotations[noteKey];
+    const inferredHand = handByNoteKey.get(noteKey) ?? 'unknown';
+    const inferredFinger = fingerByNoteKey.get(noteKey) ?? null;
+    const handSource = resolveHandSource(fileAnnotation, inferredHand);
+    const fingerSource = resolveFingerSource(fileAnnotation, inferredFinger);
+
+    handSources[handSource] += 1;
+    fingerSources[fingerSource] += 1;
 
     noteAnnotations[noteKey] = {
-      hand: handByNoteKey.get(noteKey) ?? 'unknown',
-      finger: fingerByNoteKey.get(noteKey) ?? null,
+      hand:
+        handSource === 'file'
+          ? (fileAnnotation?.hand ?? 'unknown')
+          : handSource === 'inferred'
+            ? inferredHand
+            : 'unknown',
+      finger:
+        fingerSource === 'file'
+          ? (fileAnnotation?.finger ?? null)
+          : fingerSource === 'inferred'
+            ? inferredFinger
+            : null,
+      handSource,
+      fingerSource,
     };
   }
 
@@ -64,8 +94,42 @@ function buildSongAnalysis(song: MidiSong): SongAnalysis {
     annotatedCount: Object.values(noteAnnotations).filter(
       (annotation) => annotation.hand !== 'unknown' || annotation.finger !== null,
     ).length,
+    handSources,
+    fingerSources,
   };
 }
+
+function resolveHandSource(
+  fileAnnotation: NoteAnnotation | undefined,
+  inferredHand: NoteHand,
+): NoteAnnotationSourceCountKey {
+  if (fileAnnotation?.hand && fileAnnotation.hand !== 'unknown') {
+    return 'file';
+  }
+
+  if (inferredHand !== 'unknown') {
+    return 'inferred';
+  }
+
+  return 'unavailable';
+}
+
+function resolveFingerSource(
+  fileAnnotation: NoteAnnotation | undefined,
+  inferredFinger: NoteFinger,
+): NoteAnnotationSourceCountKey {
+  if (fileAnnotation?.finger !== undefined && fileAnnotation.finger !== null) {
+    return 'file';
+  }
+
+  if (inferredFinger !== null) {
+    return 'inferred';
+  }
+
+  return 'unavailable';
+}
+
+type NoteAnnotationSourceCountKey = keyof NoteAnnotationSourceCount;
 
 function hasMultipleTracks(notes: ReadonlyArray<NoteEvent>): boolean {
   return new Set(notes.map((note) => note.track)).size > 1;

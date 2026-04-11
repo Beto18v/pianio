@@ -25,7 +25,7 @@
       id="midi-file-input"
       class="upload-panel__input upload-panel__input--hidden"
       type="file"
-      accept=".mid,.midi,audio/midi,audio/x-midi"
+      accept=".mid,.midi,.xml,.musicxml,audio/midi,audio/x-midi,application/xml,text/xml,application/vnd.recordare.musicxml"
       [disabled]="isLoading()"
       (change)="onFileSelected($event)"
     />
@@ -39,6 +39,12 @@
       {{ site.upload.inputLabel }}
     </button>
   </div>
+
+  @if (compact() && isMusicXmlSong() && !isLoading() && !errorMessage()) {
+    <p class="upload-panel__status upload-panel__status--compact-annotation">
+      {{ compactAnnotationCoverageLabel() }}
+    </p>
+  }
 
   @if (!compact()) {
     <p class="upload-panel__helper">{{ site.upload.helperText }}</p>
@@ -79,6 +85,10 @@
             </dd>
           </div>
           <div class="upload-panel__summary-item upload-panel__summary-item--primary">
+            <dt>{{ site.upload.fields.sourceFormat }}</dt>
+            <dd>{{ sourceFormatLabel() }}</dd>
+          </div>
+          <div class="upload-panel__summary-item upload-panel__summary-item--primary">
             <dt>{{ site.upload.fields.noteCount }}</dt>
             <dd>{{ parsedSong.notes.length }}</dd>
           </div>
@@ -88,8 +98,40 @@
           </div>
           <div class="upload-panel__summary-item">
             <dt>{{ site.upload.fields.ppq }}</dt>
-            <dd>{{ parsedSong.ppq }}</dd>
+            <dd>
+              @if (parsedSong.ppq !== null) {
+                {{ parsedSong.ppq }}
+              } @else {
+                {{ site.upload.notAvailable }}
+              }
+            </dd>
           </div>
+          @if (parsedSong.sourceFormat === 'musicxml') {
+            <div class="upload-panel__summary-item">
+              <dt>{{ site.upload.fields.handFromFile }}</dt>
+              <dd>{{ songAnalysis()?.handSources?.file ?? 0 }}</dd>
+            </div>
+            <div class="upload-panel__summary-item">
+              <dt>{{ site.upload.fields.handInferred }}</dt>
+              <dd>{{ songAnalysis()?.handSources?.inferred ?? 0 }}</dd>
+            </div>
+            <div class="upload-panel__summary-item">
+              <dt>{{ site.upload.fields.handUnavailable }}</dt>
+              <dd>{{ songAnalysis()?.handSources?.unavailable ?? 0 }}</dd>
+            </div>
+            <div class="upload-panel__summary-item">
+              <dt>{{ site.upload.fields.fingerFromFile }}</dt>
+              <dd>{{ songAnalysis()?.fingerSources?.file ?? 0 }}</dd>
+            </div>
+            <div class="upload-panel__summary-item">
+              <dt>{{ site.upload.fields.fingerInferred }}</dt>
+              <dd>{{ songAnalysis()?.fingerSources?.inferred ?? 0 }}</dd>
+            </div>
+            <div class="upload-panel__summary-item">
+              <dt>{{ site.upload.fields.fingerUnavailable }}</dt>
+              <dd>{{ songAnalysis()?.fingerSources?.unavailable ?? 0 }}</dd>
+            </div>
+          }
         </dl>
       </section>
     } @else if (!isLoading() && !errorMessage()) {

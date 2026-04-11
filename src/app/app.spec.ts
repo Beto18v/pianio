@@ -3,22 +3,22 @@ import { vi } from 'vitest';
 
 import { App } from './app';
 import { MidiSong } from './domain/models/midi-song.model';
-import { MidiParserService } from './services/midi-parser.service';
+import { SongParserService } from './services/song-parser.service';
 
 describe('App', () => {
   const parserService = {
-    parse: vi.fn(),
+    parseFile: vi.fn(),
   };
 
   beforeEach(async () => {
-    parserService.parse.mockReset();
+    parserService.parseFile.mockReset();
     vi.spyOn(console, 'info').mockImplementation(() => undefined);
     vi.spyOn(console, 'table').mockImplementation(() => undefined);
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [{ provide: MidiParserService, useValue: parserService }],
+      providers: [{ provide: SongParserService, useValue: parserService }],
     }).compileComponents();
   });
 
@@ -99,7 +99,7 @@ describe('App', () => {
       trackCount: 1,
     };
 
-    parserService.parse.mockReturnValue(parsedSong);
+    parserService.parseFile.mockReturnValue(parsedSong);
 
     const fixture = TestBed.createComponent(App);
 
@@ -137,7 +137,7 @@ describe('App', () => {
     ) as HTMLInputElement | null;
 
     expect(compiled.textContent).toContain('HUD de practica');
-    expect(compiled.textContent).toContain('Cargar MIDI');
+    expect(compiled.textContent).toContain('Cargar archivo');
     expect(playbackPosition?.max).toBe('0.5');
     expect(noteRainNotes).toHaveLength(1);
     expect(guidedWhiteKey?.classList.contains('stage-keyboard__key--guide-white')).toBe(true);
@@ -153,7 +153,7 @@ describe('App', () => {
       trackCount: 1,
     };
 
-    parserService.parse.mockReturnValue(parsedSong);
+    parserService.parseFile.mockReturnValue(parsedSong);
 
     const fixture = TestBed.createComponent(App);
 

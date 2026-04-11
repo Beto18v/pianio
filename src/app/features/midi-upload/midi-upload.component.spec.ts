@@ -2,23 +2,23 @@ import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 
 import { MidiSong } from '../../domain/models/midi-song.model';
-import { MidiParserService } from '../../services/midi-parser.service';
+import { SongParserService } from '../../services/song-parser.service';
 import { MidiUploadComponent } from './midi-upload.component';
 
 describe('MidiUploadComponent', () => {
   const parserService = {
-    parse: vi.fn(),
+    parseFile: vi.fn(),
   };
 
   beforeEach(async () => {
-    parserService.parse.mockReset();
+    parserService.parseFile.mockReset();
     vi.spyOn(console, 'info').mockImplementation(() => undefined);
     vi.spyOn(console, 'table').mockImplementation(() => undefined);
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     await TestBed.configureTestingModule({
       imports: [MidiUploadComponent],
-      providers: [{ provide: MidiParserService, useValue: parserService }],
+      providers: [{ provide: SongParserService, useValue: parserService }],
     }).compileComponents();
   });
 
@@ -32,11 +32,11 @@ describe('MidiUploadComponent', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
 
-    expect(compiled.textContent).toContain('Cargar MIDI');
-    expect(compiled.textContent).toContain('Sube un archivo .mid o .midi');
+    expect(compiled.textContent).toContain('Cargar archivo');
+    expect(compiled.textContent).toContain('Sube un archivo .mid, .midi, .xml o .musicxml');
     expect(compiled.textContent).toContain('Aun no hay un archivo cargado.');
     expect(compiled.querySelector('.upload-panel__helper')?.textContent).toContain(
-      'Sube un archivo .mid o .midi',
+      'Sube un archivo .mid, .midi, .xml o .musicxml',
     );
   });
 
@@ -50,7 +50,7 @@ describe('MidiUploadComponent', () => {
       trackCount: 1,
     };
 
-    parserService.parse.mockReturnValue(parsedSong);
+    parserService.parseFile.mockReturnValue(parsedSong);
 
     const fixture = TestBed.createComponent(MidiUploadComponent);
     const emissions: Array<MidiSong | null> = [];
@@ -72,9 +72,9 @@ describe('MidiUploadComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(parserService.parse).toHaveBeenCalledOnce();
-    expect(parserService.parse.mock.calls[0]?.[0]).toBeInstanceOf(ArrayBuffer);
-    expect(parserService.parse.mock.calls[0]?.[1]).toBe('scale.mid');
+    expect(parserService.parseFile).toHaveBeenCalledOnce();
+    expect(parserService.parseFile.mock.calls[0]?.[0]).toBe(file);
+    expect(parserService.parseFile.mock.calls[0]?.[1]).toBeInstanceOf(ArrayBuffer);
     expect(compiled.textContent).toContain('Resumen parseado');
     expect(compiled.textContent).toContain('scale.mid');
     expect(compiled.textContent).toContain('120');
@@ -84,7 +84,7 @@ describe('MidiUploadComponent', () => {
   });
 
   it('shows an error message when parsing fails', async () => {
-    parserService.parse.mockImplementation(() => {
+    parserService.parseFile.mockImplementation(() => {
       throw new Error('broken');
     });
 
@@ -107,7 +107,7 @@ describe('MidiUploadComponent', () => {
     fixture.detectChanges();
 
     expect(compiled.textContent).toContain(
-      'No fue posible leer o parsear el archivo seleccionado.',
+      'No fue posible leer o parsear el archivo seleccionado. Usa un .mid, .midi, .xml o .musicxml valido.',
     );
     expect(emissions).toEqual([null]);
   });

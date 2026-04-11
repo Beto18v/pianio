@@ -30,7 +30,7 @@ export class NoteRollComponent {
   protected readonly noteAnnotations = computed<NoteAnnotationMap>(() => {
     const song = this.song();
 
-    if (!song) {
+    if (!song || song.sourceFormat !== 'musicxml') {
       return {};
     }
 

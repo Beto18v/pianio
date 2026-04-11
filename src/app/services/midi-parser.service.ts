@@ -30,6 +30,8 @@ export class MidiParserService {
         tempoBpm: midi.header.tempos[0]?.bpm ?? null,
         ppq: midi.header.ppq,
         trackCount: midi.tracks.length,
+        sourceFormat: 'midi',
+        fileNoteAnnotations: {},
       };
     } catch (error) {
       throw new Error('Could not parse the selected MIDI file.', { cause: error });

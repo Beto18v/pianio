@@ -38,7 +38,7 @@ export class NoteRainComponent implements AfterViewInit {
   private readonly noteAnnotations = computed<NoteAnnotationMap>(() => {
     const song = this.song();
 
-    if (!song) {
+    if (!song || song.sourceFormat !== 'musicxml') {
       return {};
     }
 

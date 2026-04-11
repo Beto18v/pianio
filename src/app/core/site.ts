@@ -101,21 +101,35 @@ export const siteContent = {
     },
   },
   upload: {
-    eyebrow: 'MIDI',
-    heading: 'Archivo MIDI',
+    eyebrow: 'Archivo',
+    heading: 'Archivo musical',
     description:
       'Todo el procesamiento ocurre en el navegador. La escena se actualiza apenas se parsea el archivo.',
-    inputLabel: 'Cargar MIDI',
+    inputLabel: 'Cargar archivo',
     helperText:
-      'Sube un archivo .mid o .midi para habilitar transporte, lluvia de notas y modo practica.',
+      'Sube un archivo .mid, .midi, .xml o .musicxml para habilitar transporte, lluvia de notas y modo practica.',
     idleState: 'Aun no hay un archivo cargado.',
     currentFilePrefix: 'Archivo actual:',
     loadingState: 'Procesando archivo...',
-    errorState: 'No fue posible leer o parsear el archivo seleccionado.',
+    errorState:
+      'No fue posible leer o parsear el archivo seleccionado. Usa un .mid, .midi, .xml o .musicxml valido.',
     notAvailable: 'No disponible',
     summaryHeading: 'Resumen parseado',
     notePreviewHeading: 'Primeras notas',
     emptyNotes: 'El archivo no contiene notas utilizables para esta vista.',
+    sourceFormats: {
+      midi: 'MIDI',
+      musicxml: 'MusicXML',
+    },
+    compactSummary: {
+      noSong: 'Carga un archivo para ver anotaciones de mano y digitacion.',
+      annotationCoverage: (
+        sourceFormatLabel: string,
+        handFromFile: number,
+        fingerFromFile: number,
+      ) =>
+        `Formato ${sourceFormatLabel}. Mano (archivo): ${handFromFile}. Digitacion (archivo): ${fingerFromFile}.`,
+    },
     fields: {
       fileName: 'Archivo',
       duration: 'Duracion',
@@ -123,6 +137,13 @@ export const siteContent = {
       noteCount: 'Notas',
       tempo: 'Tempo',
       ppq: 'PPQ',
+      sourceFormat: 'Formato',
+      handFromFile: 'Mano (archivo)',
+      handInferred: 'Mano (inferida)',
+      handUnavailable: 'Mano (sin dato)',
+      fingerFromFile: 'Digitacion (archivo)',
+      fingerInferred: 'Digitacion (inferida)',
+      fingerUnavailable: 'Digitacion (sin dato)',
     },
   },
   visualization: {
