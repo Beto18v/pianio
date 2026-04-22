@@ -13,7 +13,11 @@ import {
   getNotesStartingInRange,
 } from '../../../domain/utils/song-note-index.util';
 import { KeyboardLayout } from '../models/keyboard-layout.model';
-import { MVP_KEYBOARD_LAYOUT, getPitchHorizontalPosition } from './keyboard-layout.util';
+import {
+  MVP_KEYBOARD_LAYOUT,
+  getPitchHorizontalPosition,
+  getPitchName,
+} from './keyboard-layout.util';
 
 export interface NoteRainLayoutConfig {
   viewportHeightPx: number;
@@ -23,8 +27,11 @@ export interface NoteRainLayoutConfig {
   maxVisibleNotes: number;
 }
 
+export type NoteRainHandMode = 'both' | 'left' | 'right';
+
 export interface FallingNote {
   pitch: number;
+  label: string;
   velocity: number;
   startTime: number;
   duration: number;
@@ -83,6 +90,7 @@ export function getFallingNote(
 
   return {
     pitch: note.pitch,
+    label: getPitchName(note.pitch),
     velocity: note.velocity,
     startTime: note.startTime,
     duration: note.duration,
@@ -105,6 +113,7 @@ export function createNoteRainLayout(
   keyboardLayout: KeyboardLayout = MVP_KEYBOARD_LAYOUT,
   noteIndex: SongNoteIndex | null = null,
   noteAnnotations: NoteAnnotationMap = {},
+  handMode: NoteRainHandMode = 'both',
 ): NoteRainLayout {
   validateLayoutConfig(config);
 
@@ -112,17 +121,22 @@ export function createNoteRainLayout(
   const { startTimeMin, startTimeMax } = getStartTimeWindow(currentTime, config, resolvedIndex);
   const candidateNotes = getNotesStartingInRange(resolvedIndex, startTimeMin, startTimeMax);
 
-  const notes = candidateNotes
-    .map((note) =>
-      getFallingNote(
-        note,
-        currentTime,
-        config,
-        keyboardLayout,
-        noteAnnotations[createNoteKey(note)] ?? null,
-      ),
-    )
-    .filter((note): note is FallingNote => note !== null);
+  const notes: FallingNote[] = [];
+
+  for (const note of candidateNotes) {
+    const noteAnnotation = noteAnnotations[createNoteKey(note)] ?? null;
+    const hand = noteAnnotation?.hand ?? 'unknown';
+
+    if (!matchesHandMode(handMode, hand)) {
+      continue;
+    }
+
+    const fallingNote = getFallingNote(note, currentTime, config, keyboardLayout, noteAnnotation);
+
+    if (fallingNote) {
+      notes.push(fallingNote);
+    }
+  }
 
   const cappedNotes = applyVisibleNoteCap(notes, currentTime, config.maxVisibleNotes);
 
@@ -178,6 +192,14 @@ function getVisibilityPriorityScore(note: FallingNote, currentTime: number): num
   const velocityBoost = clamp(note.velocity, 0, 1) * 0.15;
 
   return activeBoost + temporalProximityBoost + velocityBoost;
+}
+
+function matchesHandMode(handMode: NoteRainHandMode, hand: NoteHand): boolean {
+  if (handMode === 'both') {
+    return true;
+  }
+
+  return hand === handMode;
 }
 
 function getStartTimeWindow(

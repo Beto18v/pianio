@@ -1,16 +1,18 @@
 import { DecimalPipe } from '@angular/common';
-import { Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 
 import { siteContent } from '../../../core/site';
 import { KeyboardCalibrationService } from '../../../services/keyboard-calibration.service';
 import { MidiInputService } from '../../../services/midi-input.service';
 import { FrameBudgetService } from '../../../services/frame-budget.service';
+import { InstrumentPresetId } from '../../../services/playback-audio.service';
 import { PlaybackAudioService } from '../../../services/playback-audio.service';
 import {
   MAX_PLAYBACK_RATE,
   MIN_PLAYBACK_RATE,
   PlaybackService,
 } from '../../../services/playback.service';
+import { HandMode, PlayerSettingsService } from '../../../services/player-settings.service';
 import { PracticeService } from '../../../services/practice.service';
 
 @Component({
@@ -18,6 +20,7 @@ import { PracticeService } from '../../../services/practice.service';
   imports: [DecimalPipe],
   templateUrl: './playback-controls.component.html',
   styleUrl: './playback-controls.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PlaybackControlsComponent {
   protected readonly site = siteContent;
@@ -27,6 +30,7 @@ export class PlaybackControlsComponent {
   protected readonly practiceService = inject(PracticeService);
   protected readonly keyboardCalibrationService = inject(KeyboardCalibrationService);
   protected readonly midiInputService = inject(MidiInputService);
+  protected readonly playerSettingsService = inject(PlayerSettingsService);
   protected readonly song = this.playbackService.song;
   protected readonly playbackState = this.playbackService.playbackState;
   protected readonly frameBudgetSnapshot = this.frameBudgetService.snapshot;
@@ -42,11 +46,17 @@ export class PlaybackControlsComponent {
   protected readonly connectionState = this.midiInputService.connectionState;
   protected readonly isMockMode = this.midiInputService.isMockMode;
   protected readonly isPracticeDetailsVisible = computed(() => this.isPracticeModeEnabled());
+  protected readonly selectedPresetId = this.playbackAudioService.selectedPresetId;
+  protected readonly instrumentPresetOptions = this.playbackAudioService.instrumentPresetOptions;
+  protected readonly masterVolume = this.playbackAudioService.masterVolume;
+  protected readonly handMode = this.playerSettingsService.handMode;
+  protected readonly showNoteLabels = this.playerSettingsService.showNoteLabels;
   protected readonly minTempoPercent = Math.round(MIN_PLAYBACK_RATE * 100);
   protected readonly maxTempoPercent = Math.round(MAX_PLAYBACK_RATE * 100);
   protected readonly tempoScalePercent = computed(() =>
     Math.round(this.playbackState().playbackRate * 100),
   );
+  protected readonly masterVolumePercent = computed(() => Math.round(this.masterVolume() * 100));
   protected readonly midiTempoBpm = computed(() => {
     const tempoBpm = this.song()?.tempoBpm;
 
@@ -145,6 +155,23 @@ export class PlaybackControlsComponent {
 
     return !this.hasSong() || (!playbackState.isPlaying && playbackState.currentTime === 0);
   });
+  protected readonly selectedHandModeLabel = computed(() => {
+    switch (this.handMode()) {
+      case 'left':
+        return this.site.playback.settings.handModes.left;
+      case 'right':
+        return this.site.playback.settings.handModes.right;
+      case 'both':
+      default:
+        return this.site.playback.settings.handModes.both;
+    }
+  });
+  protected readonly selectedPresetLabel = computed(
+    () =>
+      this.instrumentPresetOptions.find((preset) => preset.id === this.selectedPresetId())?.label ??
+      this.instrumentPresetOptions[0]?.label ??
+      this.site.playback.settings.fields.sound,
+  );
 
   protected play(): void {
     void this.playbackAudioService.prepareForPlayback();
@@ -201,6 +228,52 @@ export class PlaybackControlsComponent {
     }
 
     this.playbackService.setPlaybackRate(tempoPercent / 100);
+  }
+
+  protected onHandModeChange(event: Event): void {
+    const select = event.target as HTMLSelectElement | null;
+
+    if (!select) {
+      return;
+    }
+
+    this.playerSettingsService.setHandMode(select.value as HandMode);
+  }
+
+  protected onInstrumentPresetChange(event: Event): void {
+    const select = event.target as HTMLSelectElement | null;
+
+    if (!select) {
+      return;
+    }
+
+    this.playbackAudioService.setSelectedPresetId(select.value as InstrumentPresetId);
+  }
+
+  protected onMasterVolumeInput(event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+
+    if (!input) {
+      return;
+    }
+
+    const volumePercent = Number(input.value);
+
+    if (!Number.isFinite(volumePercent)) {
+      return;
+    }
+
+    this.playbackAudioService.setMasterVolume(volumePercent / 100);
+  }
+
+  protected onShowNoteLabelsToggle(event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+
+    if (!input) {
+      return;
+    }
+
+    this.playerSettingsService.setShowNoteLabels(input.checked);
   }
 
   protected formatPitchList(pitches: ReadonlyArray<number>): string {

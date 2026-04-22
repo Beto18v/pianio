@@ -18,16 +18,16 @@ export interface FrameBudgetSnapshot {
   guardrails: AdaptiveGuardrails;
 }
 
-export const BASE_VISIBLE_NOTE_CAP = 220;
-export const MIN_VISIBLE_NOTE_CAP = 96;
-export const BASE_POLYPHONY_CAP = 10;
-export const MIN_POLYPHONY_CAP = 5;
+export const BASE_VISIBLE_NOTE_CAP = 200;
+export const MIN_VISIBLE_NOTE_CAP = 80;
+export const BASE_POLYPHONY_CAP = 9;
+export const MIN_POLYPHONY_CAP = 4;
 
 const TARGET_FRAME_MS = 1000 / 60;
-const LONG_FRAME_THRESHOLD_MS = 24;
+const LONG_FRAME_THRESHOLD_MS = 22;
 const MAX_FRAME_SAMPLE_MS = 120;
-const SAMPLE_WINDOW_SIZE = 90;
-const MIN_SAMPLE_COUNT_FOR_FULL_PRESSURE = 12;
+const SAMPLE_WINDOW_SIZE = 72;
+const MIN_SAMPLE_COUNT_FOR_FULL_PRESSURE = 8;
 const OVERLOAD_SMOOTHING = 0.82;
 
 const INITIAL_FRAME_BUDGET_SNAPSHOT: FrameBudgetSnapshot = {

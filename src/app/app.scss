@@ -1,8 +1,7 @@
 :host {
   display: block;
   min-height: 100dvh;
-  color: #f3f5ef;
-  background: #060909;
+  color: var(--brand-text);
 }
 
 .app-shell {
@@ -16,9 +15,37 @@
   --keyboard-height: clamp(11rem, 23vh, 17rem);
   min-height: 100dvh;
   background:
-    radial-gradient(circle at top left, rgb(31 83 69 / 0.34), rgb(31 83 69 / 0) 34%),
-    radial-gradient(circle at top center, rgb(240 208 132 / 0.14), rgb(240 208 132 / 0) 28%),
-    linear-gradient(180deg, #040707 0%, #07110f 46%, #0d1714 100%);
+    radial-gradient(circle at 14% 12%, rgb(168 107 255 / 0.34), rgb(168 107 255 / 0) 30%),
+    radial-gradient(circle at 84% 11%, rgb(65 204 255 / 0.32), rgb(65 204 255 / 0) 27%),
+    linear-gradient(180deg, #02051b 0%, #081137 44%, #13205b 100%);
+}
+
+.immersive-shell::before,
+.immersive-shell::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  filter: blur(18px);
+  animation: ambient-drift 9s ease-in-out infinite;
+}
+
+.immersive-shell::before {
+  width: 26rem;
+  height: 26rem;
+  top: -9rem;
+  left: -7rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(150 92 255 / 0.3), rgb(150 92 255 / 0));
+}
+
+.immersive-shell::after {
+  width: 24rem;
+  height: 24rem;
+  top: -8rem;
+  right: -6rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(52 193 255 / 0.28), rgb(52 193 255 / 0));
+  animation-delay: -4s;
 }
 
 .immersive-shell__stage {
@@ -40,19 +67,50 @@
   right: calc(var(--hud-width) + 2rem);
   display: grid;
   gap: 0.9rem;
+  animation: rise-in 420ms ease-out;
 }
 
 .immersive-shell__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.78rem;
+  width: fit-content;
+  padding: 0.58rem 0.9rem;
+  border: 1px solid var(--brand-border);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgb(14 24 68 / 0.82), rgb(14 26 78 / 0.56));
+  box-shadow: var(--brand-shadow);
+  backdrop-filter: blur(16px);
+}
+
+.immersive-shell__brand-logo {
+  width: 2.85rem;
+  height: 2.85rem;
+  border-radius: 0.9rem;
+  box-shadow: 0 10px 24px rgb(2 7 29 / 0.45);
+}
+
+.immersive-shell__brand-copy {
   display: grid;
-  gap: 0;
+  gap: 0.1rem;
 }
 
 .immersive-shell__eyebrow {
   margin: 0;
-  color: #a9d6c8;
-  font-size: 0.8rem;
+  color: rgb(188 217 255 / 0.9);
+  font-size: 0.72rem;
   font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+
+.immersive-shell__brand-name {
+  margin: 0;
+  color: #fff;
+  font-family: 'Sora', 'Outfit', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
 .immersive-shell__topbar {
@@ -80,17 +138,23 @@
   display: grid;
   gap: 0.45rem;
   max-width: min(34rem, calc(100vw - 3rem));
+  padding: 1.05rem 1.15rem;
+  border: 1px solid var(--brand-border);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgb(14 24 72 / 0.86), rgb(14 24 70 / 0.58));
+  box-shadow: var(--brand-shadow);
   text-align: center;
 }
 
 .immersive-shell__empty-state h2 {
   margin: 0;
   font-size: clamp(1.45rem, 2vw, 2rem);
+  font-family: 'Sora', 'Outfit', sans-serif;
 }
 
 .immersive-shell__empty-state p {
   margin: 0;
-  color: rgb(232 238 229 / 0.82);
+  color: var(--brand-muted);
   line-height: 1.5;
 }
 
@@ -100,6 +164,7 @@
   bottom: calc(var(--keyboard-height) + 1rem);
   width: var(--hud-width);
   overflow: auto;
+  padding-right: 0.15rem;
 }
 
 .immersive-shell__keyboard {
@@ -114,6 +179,12 @@
 @media (max-width: 860px) {
   .immersive-shell {
     --keyboard-height: clamp(10rem, 20vh, 14rem);
+  }
+
+  .immersive-shell__brand {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 14px;
   }
 
   .immersive-shell__brand {
@@ -160,8 +231,45 @@
     padding-inline: 0.85rem;
   }
 
+  .immersive-shell__brand {
+    padding: 0.5rem 0.65rem;
+    gap: 0.58rem;
+  }
+
+  .immersive-shell__brand-logo {
+    width: 2.3rem;
+    height: 2.3rem;
+  }
+
+  .immersive-shell__brand-name {
+    font-size: 0.98rem;
+  }
+
   .immersive-shell__hud {
     left: 0.85rem;
     right: 0.85rem;
+  }
+}
+
+@keyframes ambient-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(0, 10px, 0) scale(1.05);
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

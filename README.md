@@ -1,6 +1,6 @@
-# PianoFlow (Frontend)
+# Pianio (Frontend)
 
-PianoFlow is a frontend-only Angular web app for practicing piano with MIDI files.
+Pianio is a frontend-only Angular web app for practicing piano with MIDI files.
 Everything runs locally in your browser: upload a `.mid/.midi`, visualize notes in a fullscreen stage, play back with a minimal synth, connect a MIDI keyboard (Web MIDI), and practice with a “wait mode” that pauses until you match the expected notes.
 
 This repository is split into:

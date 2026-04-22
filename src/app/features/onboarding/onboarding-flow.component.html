@@ -9,8 +9,22 @@
   @if (step() === 'welcome') {
     <section class="onboarding-screen onboarding-screen--welcome" aria-labelledby="welcome-title">
       <article class="welcome-card">
-        <p class="welcome-card__eyebrow">{{ site.welcome.eyebrow }}</p>
-        <h1 id="welcome-title">{{ site.welcome.title }}</h1>
+        <header class="welcome-card__brand">
+          <img
+            class="welcome-card__logo"
+            ngSrc="/Logo.png"
+            [alt]="site.brand.logoAlt"
+            width="156"
+            height="156"
+            priority
+          />
+          <div class="welcome-card__brand-copy">
+            <p class="welcome-card__eyebrow">{{ site.welcome.eyebrow }}</p>
+            <h1 id="welcome-title">{{ site.appName }}</h1>
+            <p class="welcome-card__title">{{ site.welcome.title }}</p>
+          </div>
+        </header>
+
         <p class="welcome-card__summary">{{ site.welcome.summary }}</p>
         <p class="welcome-card__description">{{ site.welcome.description }}</p>
 

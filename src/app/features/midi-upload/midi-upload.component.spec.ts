@@ -32,12 +32,13 @@ describe('MidiUploadComponent', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
 
-    expect(compiled.textContent).toContain('Cargar archivo');
+    expect(compiled.textContent).toContain('Importar archivo');
     expect(compiled.textContent).toContain('Sube un archivo .mid, .midi, .xml o .musicxml');
-    expect(compiled.textContent).toContain('Aun no hay un archivo cargado.');
+    expect(compiled.textContent).toContain('Todavia no hay una cancion cargada.');
     expect(compiled.querySelector('.upload-panel__helper')?.textContent).toContain(
       'Sube un archivo .mid, .midi, .xml o .musicxml',
     );
+    expect(compiled.textContent).toContain('Biblioteca integrada');
   });
 
   it('reads the selected file and renders the parsed summary', async () => {

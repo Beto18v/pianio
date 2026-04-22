@@ -25,7 +25,11 @@
           [attr.data-pitch]="note.pitch"
           [attr.data-hand]="note.hand"
           [attr.data-finger]="note.finger ?? ''"
-        ></div>
+        >
+          @if (shouldRenderNoteLabels()) {
+            <span class="note-rain__label">{{ note.label }}</span>
+          }
+        </div>
       }
     </div>
   </div>

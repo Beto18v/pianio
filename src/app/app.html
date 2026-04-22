@@ -4,11 +4,25 @@
       <div class="immersive-shell__stage">
         <div class="immersive-shell__intro">
           <header class="immersive-shell__brand">
-            <p class="immersive-shell__eyebrow">{{ site.appName }}</p>
+            <img
+              class="immersive-shell__brand-logo"
+              ngSrc="/Logo.png"
+              [alt]="site.brand.logoAlt"
+              width="96"
+              height="96"
+            />
+            <div class="immersive-shell__brand-copy">
+              <p class="immersive-shell__eyebrow">{{ site.brand.stageTagline }}</p>
+              <p class="immersive-shell__brand-name">{{ site.appName }}</p>
+            </div>
           </header>
 
           <div class="immersive-shell__topbar">
-            <app-midi-upload [compact]="true" (songParsed)="onSongParsed($event)" />
+            <app-midi-upload
+              [compact]="true"
+              (songParsed)="onSongParsed($event)"
+              (playRequested)="onSongPlayRequested()"
+            />
             <app-midi-input-monitor [compact]="true" />
           </div>
         </div>

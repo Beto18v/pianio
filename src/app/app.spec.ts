@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 
 import { App } from './app';
+import { siteContent } from './core/site';
 import { MidiSong } from './domain/models/midi-song.model';
 import { SongParserService } from './services/song-parser.service';
 
@@ -40,8 +41,8 @@ describe('App', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
 
-    expect(compiled.textContent).toContain('PianoFlow');
-    expect(compiled.textContent).toContain('PianoFlow en dos pasos.');
+    expect(compiled.textContent).toContain(siteContent.appName);
+    expect(compiled.textContent).toContain(siteContent.welcome.title);
     expect(compiled.querySelector('#welcome-continue-button')).not.toBeNull();
     expect(compiled.querySelector('app-midi-upload')).toBeNull();
   });
@@ -53,7 +54,7 @@ describe('App', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
 
-    expect(compiled.textContent).toContain('Calibracion lista.');
+    expect(compiled.textContent).toContain(siteContent.calibration.readyTitle);
     expect(compiled.querySelector('#calibration-back-button')).not.toBeNull();
 
     const confirmButton = compiled.querySelector(
@@ -136,8 +137,8 @@ describe('App', () => {
       '#playback-position-input',
     ) as HTMLInputElement | null;
 
-    expect(compiled.textContent).toContain('HUD de practica');
-    expect(compiled.textContent).toContain('Cargar archivo');
+    expect(compiled.textContent).toContain(siteContent.playback.heading);
+    expect(compiled.textContent).toContain(siteContent.upload.library.importAction);
     expect(playbackPosition?.max).toBe('0.5');
     expect(noteRainNotes).toHaveLength(1);
     expect(guidedWhiteKey?.classList.contains('stage-keyboard__key--guide-white')).toBe(true);

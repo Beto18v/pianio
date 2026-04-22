@@ -1,5 +1,6 @@
 import {
   AfterViewInit,
+  ChangeDetectionStrategy,
   Component,
   DestroyRef,
   ElementRef,
@@ -13,8 +14,9 @@ import { siteContent } from '../../../core/site';
 import { NoteAnnotationMap } from '../../../domain/models/note-annotation.model';
 import { MidiSong } from '../../../domain/models/midi-song.model';
 import { createSongNoteIndex } from '../../../domain/utils/song-note-index.util';
-import { SongAnalysisService } from '../../../services/song-analysis.service';
 import { FrameBudgetService } from '../../../services/frame-budget.service';
+import { PlayerSettingsService } from '../../../services/player-settings.service';
+import { SongAnalysisService } from '../../../services/song-analysis.service';
 import { KeyboardLayout } from '../models/keyboard-layout.model';
 import { MVP_KEYBOARD_LAYOUT } from '../utils/keyboard-layout.util';
 import { DEFAULT_NOTE_RAIN_LAYOUT_CONFIG, createNoteRainLayout } from '../utils/note-rain.util';
@@ -23,6 +25,7 @@ import { DEFAULT_NOTE_RAIN_LAYOUT_CONFIG, createNoteRainLayout } from '../utils/
   selector: 'app-note-rain',
   templateUrl: './note-rain.component.html',
   styleUrl: './note-rain.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NoteRainComponent implements AfterViewInit {
   readonly song = input<MidiSong | null>(null);
@@ -32,13 +35,28 @@ export class NoteRainComponent implements AfterViewInit {
   protected readonly site = siteContent;
   private readonly songAnalysisService = inject(SongAnalysisService);
   private readonly frameBudgetService = inject(FrameBudgetService);
+  private readonly playerSettingsService = inject(PlayerSettingsService);
   private readonly hostElement = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly viewportHeightState = signal(DEFAULT_NOTE_RAIN_LAYOUT_CONFIG.viewportHeightPx);
+  protected readonly shouldRenderNoteLabels = computed(() => {
+    if (!this.playerSettingsService.showNoteLabels()) {
+      return false;
+    }
+
+    return this.frameBudgetService.guardrails().mode !== 'constrained';
+  });
+  private readonly quantizedRenderTime = computed(() => {
+    const currentTime = this.currentTime();
+    const mode = this.frameBudgetService.guardrails().mode;
+    const frameStepSeconds = mode === 'stable' ? 1 / 60 : mode === 'adaptive' ? 1 / 45 : 1 / 30;
+
+    return Math.round(currentTime / frameStepSeconds) * frameStepSeconds;
+  });
   private readonly noteAnnotations = computed<NoteAnnotationMap>(() => {
     const song = this.song();
 
-    if (!song || song.sourceFormat !== 'musicxml') {
+    if (!song) {
       return {};
     }
 
@@ -57,9 +75,9 @@ export class NoteRainComponent implements AfterViewInit {
       return null;
     }
 
-    return createNoteRainLayout(
+    const noteRainLayout = createNoteRainLayout(
       song,
-      this.currentTime(),
+      this.quantizedRenderTime(),
       {
         ...DEFAULT_NOTE_RAIN_LAYOUT_CONFIG,
         viewportHeightPx: this.viewportHeightState(),
@@ -68,7 +86,10 @@ export class NoteRainComponent implements AfterViewInit {
       this.keyboardLayout(),
       this.songIndex(),
       this.noteAnnotations(),
+      this.playerSettingsService.handMode(),
     );
+
+    return noteRainLayout;
   });
   protected readonly accessibleLabel = computed(() => {
     const song = this.song();

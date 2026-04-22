@@ -2,6 +2,7 @@ import { NoteFinger, NoteHand } from '../../../domain/models/note-annotation.mod
 
 export interface PositionedNote {
   pitch: number;
+  label: string;
   velocity: number;
   startTime: number;
   duration: number;

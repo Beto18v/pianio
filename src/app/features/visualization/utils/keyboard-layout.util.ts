@@ -122,7 +122,11 @@ function getOctave(pitch: number): number {
 }
 
 export function getPitchLabel(pitch: number): string {
-  return `${NOTE_NAMES[getPitchClass(pitch)]}${getOctave(pitch)}`;
+  return `${getPitchName(pitch)}${getOctave(pitch)}`;
+}
+
+export function getPitchName(pitch: number): string {
+  return NOTE_NAMES[getPitchClass(pitch)];
 }
 
 function toPercent(value: number, layout: KeyboardLayout): number {

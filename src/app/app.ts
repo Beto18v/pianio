@@ -1,7 +1,16 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { NgOptimizedImage } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 
 import { MidiSong } from './domain/models/midi-song.model';
+import { createNoteKey } from './domain/utils/note-key.util';
 import { createSongNoteIndex, getNotesStartingInRange } from './domain/utils/song-note-index.util';
 import { MidiInputMonitorComponent } from './features/midi-input/midi-input-monitor.component';
 import { PlaybackControlsComponent } from './features/playback/playback-controls/playback-controls.component';
@@ -13,7 +22,12 @@ import { getPitchLabel } from './features/visualization/utils/keyboard-layout.ut
 import { siteContent } from './core/site';
 import { KeyboardCalibrationService } from './services/keyboard-calibration.service';
 import { MidiInputService } from './services/midi-input.service';
+import { FrameBudgetService } from './services/frame-budget.service';
+import { PlaybackAudioService } from './services/playback-audio.service';
 import { PlaybackService } from './services/playback.service';
+import { PlayerSettingsService } from './services/player-settings.service';
+import { PracticeService } from './services/practice.service';
+import { SongAnalysisService } from './services/song-analysis.service';
 
 type AppFlowStep = 'welcome' | 'calibration' | 'main';
 
@@ -23,6 +37,7 @@ const KEY_GUIDE_RELEASE_TOLERANCE_SECONDS = 0.025;
 @Component({
   selector: 'app-root',
   imports: [
+    NgOptimizedImage,
     OnboardingFlowComponent,
     MidiUploadComponent,
     PlaybackControlsComponent,
@@ -32,12 +47,18 @@ const KEY_GUIDE_RELEASE_TOLERANCE_SECONDS = 0.025;
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {
   protected readonly site = siteContent;
   private readonly playbackService = inject(PlaybackService);
   private readonly midiInputService = inject(MidiInputService);
+  private readonly frameBudgetService = inject(FrameBudgetService);
   private readonly keyboardCalibrationService = inject(KeyboardCalibrationService);
+  private readonly songAnalysisService = inject(SongAnalysisService);
+  private readonly playerSettingsService = inject(PlayerSettingsService);
+  private readonly practiceService = inject(PracticeService);
+  private readonly playbackAudioService = inject(PlaybackAudioService);
   private readonly titleService = inject(Title);
   private readonly metaService = inject(Meta);
   private readonly flowStepState = signal<AppFlowStep>('welcome');
@@ -46,10 +67,22 @@ export class App {
   protected readonly currentSong = this.playbackService.song;
   protected readonly playbackState = this.playbackService.playbackState;
   protected readonly activeInputPitches = this.midiInputService.activePitches;
+  private readonly noteAnnotations = computed(() => {
+    const song = this.currentSong();
+
+    return song ? this.songAnalysisService.analyze(song).noteAnnotations : {};
+  });
   private readonly songNoteIndex = computed(() => {
     const song = this.currentSong();
 
     return song ? createSongNoteIndex(song.notes) : null;
+  });
+  private readonly guideCurrentTime = computed(() => {
+    const currentTime = this.playbackState().currentTime;
+    const mode = this.frameBudgetService.guardrails().mode;
+    const frameStepSeconds = mode === 'stable' ? 1 / 60 : mode === 'adaptive' ? 1 / 45 : 1 / 30;
+
+    return Math.round(currentTime / frameStepSeconds) * frameStepSeconds;
   });
   protected readonly guideSongPitches = computed<ReadonlySet<number>>(() => {
     const song = this.currentSong();
@@ -59,7 +92,7 @@ export class App {
       return new Set<number>();
     }
 
-    const currentTime = this.playbackState().currentTime;
+    const currentTime = this.guideCurrentTime();
 
     if (!Number.isFinite(currentTime)) {
       return new Set<number>();
@@ -80,14 +113,20 @@ export class App {
 
     const candidateNotes = getNotesStartingInRange(noteIndex, searchWindowStart, searchWindowEnd);
     const guidePitches = new Set<number>();
+    const noteAnnotations = this.noteAnnotations();
 
     for (const note of candidateNotes) {
       const noteEnd = note.startTime + note.duration;
       const isNoteGuidedNow =
         currentTime + KEY_GUIDE_START_TOLERANCE_SECONDS >= note.startTime &&
         currentTime <= noteEnd + KEY_GUIDE_RELEASE_TOLERANCE_SECONDS;
+      const noteAnnotation = noteAnnotations[createNoteKey(note)];
 
-      if (isNoteGuidedNow && Number.isFinite(note.pitch)) {
+      if (
+        isNoteGuidedNow &&
+        Number.isFinite(note.pitch) &&
+        this.playerSettingsService.matchesHandMode(noteAnnotation?.hand ?? 'unknown')
+      ) {
         guidePitches.add(note.pitch);
       }
     }
@@ -203,6 +242,11 @@ export class App {
 
   protected onSongParsed(song: MidiSong | null): void {
     this.playbackService.setSong(song);
+  }
+
+  protected async onSongPlayRequested(): Promise<void> {
+    await this.playbackAudioService.prepareForPlayback();
+    this.practiceService.requestPlay();
   }
 
   protected goToCalibration(): void {

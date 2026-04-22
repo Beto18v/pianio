@@ -1,4 +1,5 @@
-import { Component, input, output } from '@angular/core';
+import { NgOptimizedImage } from '@angular/common';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
 import { siteContent } from '../../core/site';
 import { KeyboardCalibrationState } from '../../domain/models/keyboard-calibration-state.model';
@@ -23,9 +24,10 @@ const DEFAULT_CALIBRATION_STATE: KeyboardCalibrationState = {
 
 @Component({
   selector: 'app-onboarding-flow',
-  imports: [PianoKeyboardComponent],
+  imports: [NgOptimizedImage, PianoKeyboardComponent],
   templateUrl: './onboarding-flow.component.html',
   styleUrl: './onboarding-flow.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OnboardingFlowComponent {
   protected readonly site = siteContent;

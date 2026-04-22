@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 
+import { siteContent } from '../../../core/site';
 import { MidiInputService } from '../../../services/midi-input.service';
 import { PlaybackService } from '../../../services/playback.service';
 import { PlaybackControlsComponent } from './playback-controls.component';
@@ -39,7 +40,7 @@ describe('PlaybackControlsComponent', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
 
-    expect(compiled.textContent).toContain('Carga un archivo MIDI para habilitar el transporte');
+    expect(compiled.textContent).toContain(siteContent.playback.idleState);
   });
 
   it('renders the transport state and forwards seek actions to the service', async () => {
@@ -63,7 +64,7 @@ describe('PlaybackControlsComponent', () => {
     slider.value = '1.25';
     slider.dispatchEvent(new Event('input'));
 
-    expect(compiled.textContent).toContain('HUD de practica');
+    expect(compiled.textContent).toContain(siteContent.playback.heading);
     expect(compiled.textContent).toContain('3 s');
     expect(seekSpy).toHaveBeenCalledWith(1.25);
   });
@@ -88,9 +89,7 @@ describe('PlaybackControlsComponent', () => {
     const practiceToggle = compiled.querySelector(
       '#practice-mode-toggle-input',
     ) as HTMLInputElement | null;
-    const playButton = Array.from(compiled.querySelectorAll('.practice-hud__button')).find(
-      (button) => button.textContent?.trim() === 'Play',
-    ) as HTMLButtonElement | undefined;
+    const playButton = compiled.querySelector('#playback-play-button') as HTMLButtonElement | null;
 
     if (!practiceToggle || !playButton) {
       throw new Error('Expected practice controls were not rendered.');
@@ -105,11 +104,11 @@ describe('PlaybackControlsComponent', () => {
     fixture.detectChanges();
 
     expect(playbackService.playbackState().isPlaying).toBe(false);
-    expect(compiled.textContent).toContain('Esperando match');
-    expect(compiled.textContent).toContain('En espera');
-    expect(compiled.textContent).toContain('Faltantes');
-    expect(compiled.textContent).toContain('Aciertos');
-    expect(compiled.textContent).toContain('Extras');
+    expect(compiled.textContent).toContain(siteContent.playback.practice.states.blocked);
+    expect(compiled.textContent).toContain(siteContent.playback.practice.waitModeStates.waiting);
+    expect(compiled.textContent).toContain(siteContent.playback.practice.fields.missing);
+    expect(compiled.textContent).toContain(siteContent.playback.practice.fields.matched);
+    expect(compiled.textContent).toContain(siteContent.playback.practice.fields.extra);
 
     midiInputService.triggerMockNote();
     TestBed.flushEffects();
@@ -117,9 +116,9 @@ describe('PlaybackControlsComponent', () => {
 
     expect(playSpy).toHaveBeenCalled();
     expect(playbackService.playbackState().isPlaying).toBe(true);
-    expect(compiled.textContent).toContain('Match');
-    expect(compiled.textContent).toContain('Avanzando');
-    expect(compiled.textContent).toContain('Aciertos');
+    expect(compiled.textContent).toContain(siteContent.playback.practice.states.match);
+    expect(compiled.textContent).toContain(siteContent.playback.practice.waitModeStates.advancing);
+    expect(compiled.textContent).toContain(siteContent.playback.practice.fields.matched);
 
     midiInputService.triggerMockNote();
     TestBed.flushEffects();
@@ -127,7 +126,7 @@ describe('PlaybackControlsComponent', () => {
 
     expect(pauseSpy).not.toHaveBeenCalled();
     expect(playbackService.playbackState().isPlaying).toBe(true);
-    expect(compiled.textContent).toContain('Avanzando');
+    expect(compiled.textContent).toContain(siteContent.playback.practice.waitModeStates.advancing);
   });
 
   it('forwards tempo slider changes to playback rate', async () => {

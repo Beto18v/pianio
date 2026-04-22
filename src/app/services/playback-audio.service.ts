@@ -1,18 +1,120 @@
-import { Injectable, effect, inject } from '@angular/core';
+import { Injectable, effect, inject, signal } from '@angular/core';
 
+import { siteContent } from '../core/site';
 import { MidiSong } from '../domain/models/midi-song.model';
+import { NoteAnnotationMap } from '../domain/models/note-annotation.model';
 import { NoteEvent } from '../domain/models/note-event.model';
+import { createNoteKey } from '../domain/utils/note-key.util';
 import { BASE_POLYPHONY_CAP, FrameBudgetService } from './frame-budget.service';
 import { MAX_PLAYBACK_RATE, MIN_PLAYBACK_RATE, PlaybackService } from './playback.service';
+import { HandMode, PlayerSettingsService } from './player-settings.service';
+import { SongAnalysisService } from './song-analysis.service';
 
 const LOOKAHEAD_SECONDS = 0.12;
 const SCHEDULE_LEAD_SECONDS = 0.003;
 const FORWARD_RESET_THRESHOLD_SECONDS = 0.55;
 const BACKWARD_RESET_THRESHOLD_SECONDS = -0.03;
-const ATTACK_SECONDS = 0.008;
-const DECAY_SECONDS = 0.038;
-const SUSTAIN_LEVEL = 0.66;
-const RELEASE_SECONDS = 0.05;
+const DEFAULT_RELEASE_SECONDS = 0.05;
+const DEFAULT_MASTER_VOLUME = 0.68;
+const playbackCopy = siteContent.playback;
+
+export type InstrumentPresetId = 'acoustic-grand' | 'bright-grand' | 'electric-piano' | 'warm-pad';
+
+export const INSTRUMENT_PRESET_OPTIONS: ReadonlyArray<{
+  id: InstrumentPresetId;
+  label: string;
+}> = [
+  { id: 'acoustic-grand', label: playbackCopy.settings.instrumentPresets.acousticGrand },
+  { id: 'bright-grand', label: playbackCopy.settings.instrumentPresets.brightGrand },
+  { id: 'electric-piano', label: playbackCopy.settings.instrumentPresets.electricPiano },
+  { id: 'warm-pad', label: playbackCopy.settings.instrumentPresets.warmPad },
+] as const;
+
+interface InstrumentPreset {
+  id: InstrumentPresetId;
+  label: string;
+  oscillatorType: OscillatorType;
+  harmonics: ReadonlyArray<number> | null;
+  voiceGain: number;
+  attackSeconds: number;
+  decaySeconds: number;
+  sustainLevel: number;
+  releaseSeconds: number;
+  filterBaseHz: number;
+  filterVelocityHz: number;
+  filterFrequencyMultiplier: number;
+  filterMinHz: number;
+  filterMaxHz: number;
+}
+
+const DEFAULT_INSTRUMENT_PRESET_ID: InstrumentPresetId = 'acoustic-grand';
+
+const INSTRUMENT_PRESETS: Readonly<Record<InstrumentPresetId, InstrumentPreset>> = {
+  'acoustic-grand': {
+    id: 'acoustic-grand',
+    label: playbackCopy.settings.instrumentPresets.acousticGrand,
+    oscillatorType: 'triangle',
+    harmonics: [0.75, 0.3, 0.16, 0.09, 0.06, 0.04, 0.028, 0.02, 0.014, 0.01],
+    voiceGain: 0.14,
+    attackSeconds: 0.008,
+    decaySeconds: 0.038,
+    sustainLevel: 0.66,
+    releaseSeconds: 0.05,
+    filterBaseHz: 850,
+    filterVelocityHz: 3200,
+    filterFrequencyMultiplier: 1.2,
+    filterMinHz: 650,
+    filterMaxHz: 6800,
+  },
+  'bright-grand': {
+    id: 'bright-grand',
+    label: playbackCopy.settings.instrumentPresets.brightGrand,
+    oscillatorType: 'triangle',
+    harmonics: [0.92, 0.54, 0.28, 0.16, 0.11, 0.08, 0.05, 0.032, 0.018],
+    voiceGain: 0.13,
+    attackSeconds: 0.006,
+    decaySeconds: 0.032,
+    sustainLevel: 0.58,
+    releaseSeconds: 0.045,
+    filterBaseHz: 1180,
+    filterVelocityHz: 3900,
+    filterFrequencyMultiplier: 1.45,
+    filterMinHz: 880,
+    filterMaxHz: 9200,
+  },
+  'electric-piano': {
+    id: 'electric-piano',
+    label: playbackCopy.settings.instrumentPresets.electricPiano,
+    oscillatorType: 'sine',
+    harmonics: [0.76, 0.18, 0.08, 0.02],
+    voiceGain: 0.16,
+    attackSeconds: 0.01,
+    decaySeconds: 0.07,
+    sustainLevel: 0.72,
+    releaseSeconds: 0.1,
+    filterBaseHz: 1420,
+    filterVelocityHz: 2100,
+    filterFrequencyMultiplier: 0.88,
+    filterMinHz: 900,
+    filterMaxHz: 5200,
+  },
+  'warm-pad': {
+    id: 'warm-pad',
+    label: playbackCopy.settings.instrumentPresets.warmPad,
+    oscillatorType: 'triangle',
+    harmonics: [0.56, 0.24, 0.1, 0.05, 0.02],
+    voiceGain: 0.12,
+    attackSeconds: 0.03,
+    decaySeconds: 0.12,
+    sustainLevel: 0.8,
+    releaseSeconds: 0.18,
+    filterBaseHz: 980,
+    filterVelocityHz: 1500,
+    filterFrequencyMultiplier: 0.62,
+    filterMinHz: 700,
+    filterMaxHz: 4200,
+  },
+} as const;
 
 interface ActiveVoice {
   oscillator: OscillatorNode;
@@ -35,13 +137,21 @@ interface WindowWithWebkitAudioContext extends Window {
 export class PlaybackAudioService {
   private readonly playbackService = inject(PlaybackService);
   private readonly frameBudgetService = inject(FrameBudgetService);
+  private readonly songAnalysisService = inject(SongAnalysisService);
+  private readonly playerSettingsService = inject(PlayerSettingsService);
+  private readonly selectedPresetIdState = signal<InstrumentPresetId>(DEFAULT_INSTRUMENT_PRESET_ID);
+  private readonly masterVolumeState = signal(DEFAULT_MASTER_VOLUME);
+
+  readonly instrumentPresetOptions = INSTRUMENT_PRESET_OPTIONS;
+  readonly selectedPresetId = this.selectedPresetIdState.asReadonly();
+  readonly masterVolume = this.masterVolumeState.asReadonly();
 
   private readonly activeVoices = new Map<number, ActiveVoice>();
   private scheduledWindowVoices: ScheduledWindowVoice[] = [];
   private audioContext: AudioContext | null = null;
   private masterGainNode: GainNode | null = null;
   private masterCompressorNode: DynamicsCompressorNode | null = null;
-  private pianoWave: PeriodicWave | null = null;
+  private readonly waveCache = new Map<InstrumentPresetId, PeriodicWave>();
   private scheduledSong: MidiSong | null = null;
   private songCursor = 0;
   private scheduledThroughTime = 0;
@@ -50,19 +160,45 @@ export class PlaybackAudioService {
   private songTimeAnchor = 0;
   private audioTimeAnchor = 0;
   private transportPlaybackRate = 1;
+  private lastHandMode = this.playerSettingsService.handMode();
+  private lastInstrumentPresetId = this.selectedPresetId();
+  private analyzedSong: MidiSong | null = null;
+  private analyzedNoteAnnotations: NoteAnnotationMap = {};
 
   constructor() {
     effect(() => {
       const song = this.playbackService.song();
       const playbackState = this.playbackService.playbackState();
+      const handMode = this.playerSettingsService.handMode();
+      const selectedPresetId = this.selectedPresetId();
 
       this.syncWithTransport(
         song,
         playbackState.currentTime,
         playbackState.isPlaying,
         playbackState.playbackRate,
+        handMode,
+        selectedPresetId,
       );
     });
+  }
+
+  setSelectedPresetId(presetId: InstrumentPresetId): void {
+    if (!INSTRUMENT_PRESET_OPTIONS.some((preset) => preset.id === presetId)) {
+      return;
+    }
+
+    this.selectedPresetIdState.set(presetId);
+  }
+
+  setMasterVolume(nextMasterVolume: number): void {
+    const clampedVolume = clamp(nextMasterVolume, 0, 1);
+
+    this.masterVolumeState.set(clampedVolume);
+
+    if (this.masterGainNode && this.audioContext) {
+      this.masterGainNode.gain.setTargetAtTime(clampedVolume, this.audioContext.currentTime, 0.02);
+    }
   }
 
   async prepareForPlayback(): Promise<void> {
@@ -80,18 +216,26 @@ export class PlaybackAudioService {
     currentTime: number,
     isPlaying: boolean,
     playbackRate: number,
+    handMode: HandMode,
+    selectedPresetId: InstrumentPresetId,
   ): void {
     const safePlaybackRate = clampPlaybackRate(playbackRate);
 
     if (!song) {
       this.stopAllVoices();
       this.resetSchedulerState(null, 0, false, safePlaybackRate);
+      this.lastHandMode = handMode;
+      this.lastInstrumentPresetId = selectedPresetId;
+      this.analyzedSong = null;
+      this.analyzedNoteAnnotations = {};
       return;
     }
 
     const safeCurrentTime = clampSongTime(currentTime, song.duration);
     const songChanged = song !== this.scheduledSong;
     const playbackRateChanged = Math.abs(safePlaybackRate - this.transportPlaybackRate) > 0.0001;
+    const handModeChanged = handMode !== this.lastHandMode;
+    const presetChanged = selectedPresetId !== this.lastInstrumentPresetId;
 
     if (!isPlaying) {
       if (this.wasPlaying || songChanged) {
@@ -99,6 +243,8 @@ export class PlaybackAudioService {
       }
 
       this.resetSchedulerState(song, safeCurrentTime, false, safePlaybackRate);
+      this.lastHandMode = handMode;
+      this.lastInstrumentPresetId = selectedPresetId;
       return;
     }
 
@@ -113,19 +259,23 @@ export class PlaybackAudioService {
     const needsRehydrate =
       songChanged ||
       playbackRateChanged ||
+      handModeChanged ||
+      presetChanged ||
       !this.wasPlaying ||
       hasTransportJump(this.lastTransportTime, safeCurrentTime);
 
     if (needsRehydrate) {
       this.stopAllVoices();
       this.resetSchedulerState(song, safeCurrentTime, true, safePlaybackRate);
-      this.rehydrateActiveNotes(song, safeCurrentTime, audioContext);
+      this.rehydrateActiveNotes(song, safeCurrentTime, audioContext, handMode);
     }
 
-    this.scheduleLookahead(song, safeCurrentTime, audioContext);
+    this.scheduleLookahead(song, safeCurrentTime, audioContext, handMode);
     this.wasPlaying = true;
     this.lastTransportTime = safeCurrentTime;
     this.scheduledSong = song;
+    this.lastHandMode = handMode;
+    this.lastInstrumentPresetId = selectedPresetId;
   }
 
   private resetSchedulerState(
@@ -158,11 +308,17 @@ export class PlaybackAudioService {
     song: MidiSong,
     currentTime: number,
     audioContext: AudioContext,
+    handMode: HandMode,
   ): void {
     const polyphonyCap = this.resolvePolyphonyCap();
     const activeNotes = song.notes
       .map((note, index) => ({ index, note }))
-      .filter(({ note }) => note.startTime < currentTime && isNoteActive(note, currentTime))
+      .filter(
+        ({ note }) =>
+          this.shouldPlayNote(song, note, handMode) &&
+          note.startTime < currentTime &&
+          isNoteActive(note, currentTime),
+      )
       .sort(
         (left, right) =>
           normalizeVelocity(right.note.velocity) - normalizeVelocity(left.note.velocity),
@@ -181,7 +337,12 @@ export class PlaybackAudioService {
     }
   }
 
-  private scheduleLookahead(song: MidiSong, currentTime: number, audioContext: AudioContext): void {
+  private scheduleLookahead(
+    song: MidiSong,
+    currentTime: number,
+    audioContext: AudioContext,
+    handMode: HandMode,
+  ): void {
     const polyphonyCap = this.resolvePolyphonyCap();
 
     if (polyphonyCap < 1) {
@@ -208,6 +369,10 @@ export class PlaybackAudioService {
       }
 
       this.songCursor += 1;
+
+      if (!this.shouldPlayNote(song, note, handMode)) {
+        continue;
+      }
 
       if (note.startTime + note.duration <= currentTime) {
         continue;
@@ -299,19 +464,27 @@ export class PlaybackAudioService {
       return;
     }
 
+    const instrumentPreset = getInstrumentPreset(this.selectedPresetId());
     const oscillator = audioContext.createOscillator();
     const filter = audioContext.createBiquadFilter();
     const gain = audioContext.createGain();
     const velocityGain = velocityToGain(note.velocity);
     const polyphonyCompensation = 1 / Math.sqrt(Math.max(activeNoteCount, 1));
-    const voicePeakGain = velocityGain * 0.14 * polyphonyCompensation;
-    const voiceSustainGain = voicePeakGain * SUSTAIN_LEVEL;
-    const filterCutoff = clamp(850 + velocityGain * 3200 + frequency * 1.2, 650, 6800);
+    const voicePeakGain = velocityGain * instrumentPreset.voiceGain * polyphonyCompensation;
+    const voiceSustainGain = voicePeakGain * instrumentPreset.sustainLevel;
+    const filterCutoff = clamp(
+      instrumentPreset.filterBaseHz +
+        velocityGain * instrumentPreset.filterVelocityHz +
+        frequency * instrumentPreset.filterFrequencyMultiplier,
+      instrumentPreset.filterMinHz,
+      instrumentPreset.filterMaxHz,
+    );
+    const presetWave = this.resolvePresetWave(audioContext, instrumentPreset);
 
-    if (this.pianoWave) {
-      oscillator.setPeriodicWave(this.pianoWave);
+    if (presetWave) {
+      oscillator.setPeriodicWave(presetWave);
     } else {
-      oscillator.type = 'triangle';
+      oscillator.type = instrumentPreset.oscillatorType;
     }
 
     oscillator.frequency.setValueAtTime(frequency, startTime);
@@ -320,10 +493,13 @@ export class PlaybackAudioService {
     filter.frequency.setValueAtTime(filterCutoff, startTime);
 
     gain.gain.setValueAtTime(0.0001, startTime);
-    gain.gain.linearRampToValueAtTime(voicePeakGain, startTime + ATTACK_SECONDS);
-    gain.gain.linearRampToValueAtTime(voiceSustainGain, startTime + ATTACK_SECONDS + DECAY_SECONDS);
+    gain.gain.linearRampToValueAtTime(voicePeakGain, startTime + instrumentPreset.attackSeconds);
+    gain.gain.linearRampToValueAtTime(
+      voiceSustainGain,
+      startTime + instrumentPreset.attackSeconds + instrumentPreset.decaySeconds,
+    );
     gain.gain.setValueAtTime(voiceSustainGain, noteOffTime);
-    gain.gain.linearRampToValueAtTime(0.0001, noteOffTime + RELEASE_SECONDS);
+    gain.gain.linearRampToValueAtTime(0.0001, noteOffTime + instrumentPreset.releaseSeconds);
 
     oscillator.connect(filter);
     filter.connect(gain);
@@ -335,7 +511,7 @@ export class PlaybackAudioService {
       this.activeVoices.delete(noteId);
     };
     oscillator.start(startTime);
-    oscillator.stop(noteOffTime + RELEASE_SECONDS + 0.005);
+    oscillator.stop(noteOffTime + instrumentPreset.releaseSeconds + 0.005);
 
     this.activeVoices.set(noteId, { oscillator, filter, gain, startTime });
   }
@@ -353,9 +529,9 @@ export class PlaybackAudioService {
 
     voice.gain.gain.cancelScheduledValues(releaseStartTime);
     voice.gain.gain.setValueAtTime(currentGain, releaseStartTime);
-    voice.gain.gain.linearRampToValueAtTime(0.0001, releaseStartTime + RELEASE_SECONDS);
+    voice.gain.gain.linearRampToValueAtTime(0.0001, releaseStartTime + DEFAULT_RELEASE_SECONDS);
 
-    voice.oscillator.stop(releaseStartTime + RELEASE_SECONDS + 0.005);
+    voice.oscillator.stop(releaseStartTime + DEFAULT_RELEASE_SECONDS + 0.005);
     this.activeVoices.delete(noteId);
   }
 
@@ -392,9 +568,8 @@ export class PlaybackAudioService {
       this.audioContext = new audioContextConstructor();
       this.masterGainNode = this.audioContext.createGain();
       this.masterCompressorNode = this.audioContext.createDynamicsCompressor();
-      this.pianoWave = createPianoWave(this.audioContext);
 
-      this.masterGainNode.gain.setValueAtTime(0.68, this.audioContext.currentTime);
+      this.masterGainNode.gain.setValueAtTime(this.masterVolume(), this.audioContext.currentTime);
       this.masterCompressorNode.threshold.setValueAtTime(-18, this.audioContext.currentTime);
       this.masterCompressorNode.knee.setValueAtTime(12, this.audioContext.currentTime);
       this.masterCompressorNode.ratio.setValueAtTime(8, this.audioContext.currentTime);
@@ -406,6 +581,44 @@ export class PlaybackAudioService {
     }
 
     return this.audioContext;
+  }
+
+  private shouldPlayNote(song: MidiSong, note: NoteEvent, handMode: HandMode): boolean {
+    if (handMode === 'both') {
+      return true;
+    }
+
+    const noteAnnotation = this.getNoteAnnotations(song)[createNoteKey(note)];
+
+    return noteAnnotation?.hand === handMode;
+  }
+
+  private getNoteAnnotations(song: MidiSong): NoteAnnotationMap {
+    if (song !== this.analyzedSong) {
+      this.analyzedSong = song;
+      this.analyzedNoteAnnotations = this.songAnalysisService.analyze(song).noteAnnotations;
+    }
+
+    return this.analyzedNoteAnnotations;
+  }
+
+  private resolvePresetWave(
+    audioContext: AudioContext,
+    instrumentPreset: InstrumentPreset,
+  ): PeriodicWave | null {
+    if (!instrumentPreset.harmonics || instrumentPreset.harmonics.length === 0) {
+      return null;
+    }
+
+    const cachedWave = this.waveCache.get(instrumentPreset.id);
+
+    if (cachedWave) {
+      return cachedWave;
+    }
+
+    const periodicWave = createWaveFromHarmonics(audioContext, instrumentPreset.harmonics);
+    this.waveCache.set(instrumentPreset.id, periodicWave);
+    return periodicWave;
   }
 }
 
@@ -486,9 +699,16 @@ function midiToFrequency(pitch: number): number {
   return 440 * 2 ** ((pitch - 69) / 12);
 }
 
-function createPianoWave(audioContext: AudioContext): PeriodicWave {
-  const real = new Float32Array([0, 0.75, 0.3, 0.16, 0.09, 0.06, 0.04, 0.028, 0.02, 0.014, 0.01]);
+function createWaveFromHarmonics(
+  audioContext: AudioContext,
+  harmonics: ReadonlyArray<number>,
+): PeriodicWave {
+  const real = new Float32Array([0, ...harmonics]);
   const imag = new Float32Array(real.length);
 
   return audioContext.createPeriodicWave(real, imag, { disableNormalization: false });
+}
+
+function getInstrumentPreset(presetId: InstrumentPresetId): InstrumentPreset {
+  return INSTRUMENT_PRESETS[presetId] ?? INSTRUMENT_PRESETS[DEFAULT_INSTRUMENT_PRESET_ID];
 }

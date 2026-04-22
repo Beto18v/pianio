@@ -5,7 +5,11 @@ import { createNoteKey } from '../../../domain/utils/note-key.util';
 import { KeyboardLayout } from '../models/keyboard-layout.model';
 import { NoteRollLayout } from '../models/note-roll-layout.model';
 import { PositionedNote } from '../models/positioned-note.model';
-import { MVP_KEYBOARD_LAYOUT, getPitchHorizontalPosition } from './keyboard-layout.util';
+import {
+  MVP_KEYBOARD_LAYOUT,
+  getPitchHorizontalPosition,
+  getPitchName,
+} from './keyboard-layout.util';
 
 export interface NoteRollLayoutConfig {
   pixelsPerSecond: number;
@@ -35,6 +39,7 @@ export function getPositionedNote(
 
   return {
     pitch: note.pitch,
+    label: getPitchName(note.pitch),
     velocity: note.velocity,
     startTime: note.startTime,
     duration: note.duration,

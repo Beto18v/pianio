@@ -84,6 +84,74 @@
     </label>
   </section>
 
+  <section class="practice-hud__section" aria-labelledby="practice-hud-settings-title">
+    <div class="practice-hud__section-head">
+      <h3 id="practice-hud-settings-title">{{ site.playback.settings.title }}</h3>
+      <span class="practice-hud__section-value">{{ selectedHandModeLabel() }}</span>
+    </div>
+
+    <div class="practice-hud__control-grid">
+      <label class="practice-hud__field" for="practice-hand-mode-input">
+        <span>{{ site.playback.settings.fields.hands }}</span>
+        <select
+          id="practice-hand-mode-input"
+          class="practice-hud__select"
+          [value]="handMode()"
+          [disabled]="!hasSong()"
+          (change)="onHandModeChange($event)"
+        >
+          <option value="both">{{ site.playback.settings.handModes.both }}</option>
+          <option value="left">{{ site.playback.settings.handModes.left }}</option>
+          <option value="right">{{ site.playback.settings.handModes.right }}</option>
+        </select>
+      </label>
+
+      <label class="practice-hud__field" for="practice-sound-preset-input">
+        <span>{{ site.playback.settings.fields.sound }}</span>
+        <select
+          id="practice-sound-preset-input"
+          class="practice-hud__select"
+          [value]="selectedPresetId()"
+          (change)="onInstrumentPresetChange($event)"
+        >
+          @for (preset of instrumentPresetOptions; track preset.id) {
+            <option [value]="preset.id">{{ preset.label }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="practice-hud__seek" for="practice-master-volume-input">
+        <span>
+          {{ site.playback.settings.fields.volume }}: {{ masterVolumePercent() }}%
+        </span>
+        <input
+          id="practice-master-volume-input"
+          class="practice-hud__slider"
+          type="range"
+          min="0"
+          max="100"
+          step="1"
+          [value]="masterVolumePercent()"
+          (input)="onMasterVolumeInput($event)"
+        />
+      </label>
+
+      <label class="practice-hud__checkbox" for="practice-note-labels-toggle">
+        <input
+          id="practice-note-labels-toggle"
+          type="checkbox"
+          [checked]="showNoteLabels()"
+          (change)="onShowNoteLabelsToggle($event)"
+        />
+        <span>{{ site.playback.settings.fields.noteLabels }}</span>
+      </label>
+    </div>
+
+    <p class="practice-hud__status practice-hud__status--subtle">
+      {{ site.playback.settings.hint }}
+    </p>
+  </section>
+
   <section class="practice-hud__section" aria-labelledby="practice-hud-performance-title">
     <div class="practice-hud__section-head">
       <h3 id="practice-hud-performance-title">{{ site.playback.performance.title }}</h3>
@@ -245,6 +313,7 @@
 
     <div class="practice-hud__actions">
       <button
+        id="playback-play-button"
         class="practice-hud__button"
         type="button"
         (click)="play()"
@@ -253,6 +322,7 @@
         {{ site.playback.actions.play }}
       </button>
       <button
+        id="playback-pause-button"
         class="practice-hud__button"
         type="button"
         (click)="pause()"
@@ -261,6 +331,7 @@
         {{ site.playback.actions.pause }}
       </button>
       <button
+        id="playback-stop-button"
         class="practice-hud__button practice-hud__button--ghost"
         type="button"
         (click)="stop()"

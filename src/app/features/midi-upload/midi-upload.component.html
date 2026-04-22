@@ -26,18 +26,64 @@
       class="upload-panel__input upload-panel__input--hidden"
       type="file"
       accept=".mid,.midi,.xml,.musicxml,audio/midi,audio/x-midi,application/xml,text/xml,application/vnd.recordare.musicxml"
-      [disabled]="isLoading()"
+      [disabled]="isBusy()"
       (change)="onFileSelected($event)"
     />
 
-    <button
-      class="upload-panel__choose-button"
-      type="button"
-      [disabled]="isLoading()"
-      (click)="openFilePicker(midiFileInput)"
-    >
-      {{ site.upload.inputLabel }}
-    </button>
+    @if (compact()) {
+      <div class="upload-panel__compact-layout">
+        <label class="upload-panel__field">
+          <span class="upload-panel__field-label">{{ site.upload.library.label }}</span>
+          <select
+            class="upload-panel__select"
+            [value]="selectedLibrarySongId()"
+            [disabled]="isBusy()"
+            (change)="onLibrarySelectionChange($event)"
+          >
+            @for (entry of libraryEntries; track entry.id) {
+              <option [value]="entry.id">
+                {{ entry.title }} · {{ entry.artist }}
+              </option>
+            }
+          </select>
+        </label>
+
+        <button
+          class="upload-panel__choose-button upload-panel__choose-button--primary"
+          type="button"
+          [disabled]="isBusy()"
+          (click)="loadSelectedLibrarySong(true)"
+        >
+          {{ isLibraryLoading() ? site.upload.library.loadingAction : site.upload.library.playAction }}
+        </button>
+
+        <button
+          class="upload-panel__choose-button upload-panel__choose-button--ghost"
+          type="button"
+          [disabled]="isBusy()"
+          (click)="openFilePicker(midiFileInput)"
+        >
+          {{ site.upload.library.importAction }}
+        </button>
+      </div>
+
+      @if (selectedLibraryEntry(); as selectedEntry) {
+        <div class="upload-panel__library-meta">
+          <span class="upload-panel__chip">{{ selectedEntry.difficulty }}</span>
+          <span class="upload-panel__chip">{{ selectedEntry.artist }}</span>
+          <span class="upload-panel__chip">{{ selectedEntry.tags.join(' · ') }}</span>
+        </div>
+      }
+    } @else {
+      <button
+        class="upload-panel__choose-button"
+        type="button"
+        [disabled]="isBusy()"
+        (click)="openFilePicker(midiFileInput)"
+      >
+        {{ site.upload.inputLabel }}
+      </button>
+    }
   </div>
 
   @if (compact() && isMusicXmlSong() && !isLoading() && !errorMessage()) {
@@ -48,15 +94,39 @@
 
   @if (!compact()) {
     <p class="upload-panel__helper">{{ site.upload.helperText }}</p>
+
+    <section class="upload-panel__library" aria-labelledby="upload-library-title">
+      <div class="upload-panel__library-head">
+        <div>
+          <h3 id="upload-library-title">{{ site.upload.library.heading }}</h3>
+          <p class="upload-panel__helper">{{ site.upload.library.description }}</p>
+        </div>
+      </div>
+
+      <div class="upload-panel__library-grid">
+        @for (entry of featuredLibraryEntries(); track entry.id) {
+          <button
+            class="upload-panel__library-card"
+            type="button"
+            [disabled]="isBusy()"
+            (click)="loadFeaturedSong(entry)"
+          >
+            <span class="upload-panel__library-card-title">{{ entry.title }}</span>
+            <span class="upload-panel__library-card-meta">{{ entry.artist }}</span>
+            <span class="upload-panel__chip">{{ entry.difficulty }}</span>
+          </button>
+        }
+      </div>
+    </section>
   }
 
   @if (!compact() && isLoading()) {
     <p class="upload-panel__status">{{ site.upload.loadingState }}</p>
   }
 
-  @if (errorMessage()) {
+  @if (visibleErrorMessage()) {
     <p class="upload-panel__status upload-panel__status--error" role="alert">
-      {{ errorMessage() }}
+      {{ visibleErrorMessage() }}
     </p>
   }
 

@@ -2,6 +2,7 @@ import { Injectable, computed, effect, inject, signal } from '@angular/core';
 
 import { PracticeState, PracticeWaitModeStatus } from '../domain/models/practice-state.model';
 import { UserPlayedNote } from '../domain/models/user-played-note.model';
+import { createNoteKey } from '../domain/utils/note-key.util';
 import {
   DEFAULT_PRACTICE_STEP_TIME_TOLERANCE_SECONDS,
   createPracticeStepIndex,
@@ -9,6 +10,8 @@ import {
 } from '../domain/utils/practice-step-index.util';
 import { MidiInputService } from './midi-input.service';
 import { PlaybackService } from './playback.service';
+import { PlayerSettingsService } from './player-settings.service';
+import { SongAnalysisService } from './song-analysis.service';
 
 type PracticeTransportMode = 'idle' | 'waiting' | 'advancing';
 
@@ -27,14 +30,33 @@ interface PracticePitchEvaluation {
 export class PracticeService {
   private readonly playbackService = inject(PlaybackService);
   private readonly midiInputService = inject(MidiInputService);
+  private readonly songAnalysisService = inject(SongAnalysisService);
+  private readonly playerSettingsService = inject(PlayerSettingsService);
   private readonly practiceModeEnabledState = signal(false);
   private readonly playIntentState = signal(false);
   private readonly stepPointerIndexState = signal<number | null>(null);
   private readonly matchedPitchesState = signal<ReadonlySet<number>>(new Set<number>());
-  private readonly practiceStepIndex = computed(() => {
+  private readonly practiceNotes = computed(() => {
     const song = this.playbackService.song();
 
-    return song ? createPracticeStepIndex(song.notes) : null;
+    if (!song) {
+      return [];
+    }
+
+    const handMode = this.playerSettingsService.handMode();
+
+    if (handMode === 'both') {
+      return song.notes;
+    }
+
+    const noteAnnotations = this.songAnalysisService.analyze(song).noteAnnotations;
+
+    return song.notes.filter((note) => noteAnnotations[createNoteKey(note)]?.hand === handMode);
+  });
+  private readonly practiceStepIndex = computed(() => {
+    const practiceNotes = this.practiceNotes();
+
+    return practiceNotes.length > 0 ? createPracticeStepIndex(practiceNotes) : null;
   });
   private readonly activeInputPitchesState = computed(() =>
     toSortedPitches(this.midiInputService.activePitches()),
