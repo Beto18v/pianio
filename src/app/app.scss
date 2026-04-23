@@ -161,10 +161,8 @@
 .immersive-shell__hud {
   top: 1rem;
   right: 1rem;
-  bottom: calc(var(--keyboard-height) + 1rem);
   width: var(--hud-width);
-  overflow: auto;
-  padding-right: 0.15rem;
+  overflow: visible;
 }
 
 .immersive-shell__keyboard {
@@ -222,7 +220,7 @@
     top: auto;
     bottom: calc(var(--keyboard-height) + 1rem);
     width: auto;
-    max-height: 15rem;
+    max-height: none;
   }
 }
 

@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
+import { siteContent } from '../../core/site';
 import { MidiInputMonitorComponent } from './midi-input-monitor.component';
 
 describe('MidiInputMonitorComponent', () => {
@@ -16,9 +17,9 @@ describe('MidiInputMonitorComponent', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
 
-    expect(compiled.textContent).toContain('Dispositivos');
-    expect(compiled.textContent).toContain('Modo simulado');
-    expect(compiled.textContent).toContain('Web MIDI API no esta disponible en este navegador.');
+    expect(compiled.textContent).not.toContain(siteContent.midiInput.fields.connectedDevices);
+    expect(compiled.textContent).toContain(siteContent.midiInput.states.mock);
+    expect(compiled.textContent).toContain(siteContent.midiInput.errors.webMidiNotAvailable);
     expect(compiled.querySelector('button')).toBeNull();
   });
 });

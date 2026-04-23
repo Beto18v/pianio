@@ -1,7 +1,23 @@
 import { KeyboardLayout } from '../models/keyboard-layout.model';
 import { KeyboardKey } from '../models/keyboard-key.model';
 
-const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'] as const;
+export type PitchNameFormat = 'letters' | 'solfege';
+
+const LETTER_NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'] as const;
+const SOLFEGE_NOTE_NAMES = [
+  'DO',
+  'DO#',
+  'RE',
+  'RE#',
+  'MI',
+  'FA',
+  'FA#',
+  'SOL',
+  'SOL#',
+  'LA',
+  'LA#',
+  'SI',
+] as const;
 const BLACK_PITCH_CLASSES = new Set([1, 3, 6, 8, 10]);
 const WHITE_KEY_WIDTH_UNITS = 1;
 const BLACK_KEY_WIDTH_UNITS = 0.65;
@@ -125,8 +141,10 @@ export function getPitchLabel(pitch: number): string {
   return `${getPitchName(pitch)}${getOctave(pitch)}`;
 }
 
-export function getPitchName(pitch: number): string {
-  return NOTE_NAMES[getPitchClass(pitch)];
+export function getPitchName(pitch: number, format: PitchNameFormat = 'letters'): string {
+  const noteNames = format === 'solfege' ? SOLFEGE_NOTE_NAMES : LETTER_NOTE_NAMES;
+
+  return noteNames[getPitchClass(pitch)];
 }
 
 function toPercent(value: number, layout: KeyboardLayout): number {

@@ -3,10 +3,12 @@ import { Injectable, computed, signal } from '@angular/core';
 import { NoteHand } from '../domain/models/note-annotation.model';
 
 export type HandMode = 'both' | 'left' | 'right';
+export type NoteLabelFormat = 'letters' | 'solfege';
 
 interface PlayerSettingsState {
   handMode: HandMode;
   showNoteLabels: boolean;
+  noteLabelFormat: NoteLabelFormat;
 }
 
 const STORAGE_KEY = 'pianio-player-settings';
@@ -14,6 +16,7 @@ const STORAGE_KEY = 'pianio-player-settings';
 const DEFAULT_PLAYER_SETTINGS: PlayerSettingsState = {
   handMode: 'both',
   showNoteLabels: true,
+  noteLabelFormat: 'letters',
 };
 
 @Injectable({
@@ -25,6 +28,7 @@ export class PlayerSettingsService {
   readonly state = this.stateState.asReadonly();
   readonly handMode = computed(() => this.state().handMode);
   readonly showNoteLabels = computed(() => this.state().showNoteLabels);
+  readonly noteLabelFormat = computed(() => this.state().noteLabelFormat);
 
   setHandMode(handMode: HandMode): void {
     this.updateState({ handMode });
@@ -32,6 +36,10 @@ export class PlayerSettingsService {
 
   setShowNoteLabels(showNoteLabels: boolean): void {
     this.updateState({ showNoteLabels });
+  }
+
+  setNoteLabelFormat(noteLabelFormat: NoteLabelFormat): void {
+    this.updateState({ noteLabelFormat });
   }
 
   matchesHandMode(hand: NoteHand): boolean {
@@ -82,6 +90,10 @@ function loadInitialPlayerSettings(): PlayerSettingsState {
         typeof parsedState.showNoteLabels === 'boolean'
           ? parsedState.showNoteLabels
           : DEFAULT_PLAYER_SETTINGS.showNoteLabels,
+      noteLabelFormat:
+        parsedState.noteLabelFormat === 'letters' || parsedState.noteLabelFormat === 'solfege'
+          ? parsedState.noteLabelFormat
+          : DEFAULT_PLAYER_SETTINGS.noteLabelFormat,
     };
   } catch {
     return DEFAULT_PLAYER_SETTINGS;

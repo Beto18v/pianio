@@ -16,9 +16,14 @@
 }
 
 .midi-input-badge--compact {
-  gap: 0;
+  gap: 0.28rem;
   min-width: 11.5rem;
   padding: 0.66rem 0.72rem;
+}
+
+.midi-input-badge--compact .midi-input-badge__label {
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
 }
 
 .midi-input-badge--compact .midi-input-badge__status {

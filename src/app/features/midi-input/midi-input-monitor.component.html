@@ -3,11 +3,8 @@
   [class.midi-input-badge--compact]="compact()"
   [attr.aria-label]="site.midiInput.badgeAriaLabel"
 >
-  @if (!compact()) {
-    <p class="midi-input-badge__label">{{ site.midiInput.fields.devices }}</p>
-  }
-
   @if (primaryDeviceName(); as deviceName) {
+    <p class="midi-input-badge__label">{{ site.midiInput.fields.connectedDevices }}</p>
     @if (!compact()) {
       <p class="midi-input-badge__status">{{ statusLabel() }}</p>
     }

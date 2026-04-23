@@ -18,8 +18,8 @@ export interface FrameBudgetSnapshot {
   guardrails: AdaptiveGuardrails;
 }
 
-export const BASE_VISIBLE_NOTE_CAP = 200;
-export const MIN_VISIBLE_NOTE_CAP = 80;
+export const BASE_VISIBLE_NOTE_CAP = 180;
+export const MIN_VISIBLE_NOTE_CAP = 60;
 export const BASE_POLYPHONY_CAP = 9;
 export const MIN_POLYPHONY_CAP = 4;
 

@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 
+import { siteContent } from '../../core/site';
 import { MidiSong } from '../../domain/models/midi-song.model';
 import { SongParserService } from '../../services/song-parser.service';
 import { MidiUploadComponent } from './midi-upload.component';
@@ -32,13 +33,13 @@ describe('MidiUploadComponent', () => {
 
     const compiled = fixture.nativeElement as HTMLElement;
 
-    expect(compiled.textContent).toContain('Importar archivo');
-    expect(compiled.textContent).toContain('Sube un archivo .mid, .midi, .xml o .musicxml');
-    expect(compiled.textContent).toContain('Todavia no hay una cancion cargada.');
+    expect(compiled.textContent).toContain(siteContent.upload.library.importAction);
+    expect(compiled.textContent).toContain(siteContent.upload.helperText);
+    expect(compiled.textContent).toContain(siteContent.upload.idleState);
     expect(compiled.querySelector('.upload-panel__helper')?.textContent).toContain(
       'Sube un archivo .mid, .midi, .xml o .musicxml',
     );
-    expect(compiled.textContent).toContain('Biblioteca integrada');
+    expect(compiled.textContent).toContain(siteContent.upload.library.heading);
   });
 
   it('reads the selected file and renders the parsed summary', async () => {
@@ -76,7 +77,7 @@ describe('MidiUploadComponent', () => {
     expect(parserService.parseFile).toHaveBeenCalledOnce();
     expect(parserService.parseFile.mock.calls[0]?.[0]).toBe(file);
     expect(parserService.parseFile.mock.calls[0]?.[1]).toBeInstanceOf(ArrayBuffer);
-    expect(compiled.textContent).toContain('Resumen parseado');
+    expect(compiled.textContent).toContain(siteContent.upload.summaryHeading);
     expect(compiled.textContent).toContain('scale.mid');
     expect(compiled.textContent).toContain('120');
     expect(compiled.textContent).not.toContain('Primeras notas');
@@ -107,9 +108,7 @@ describe('MidiUploadComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(compiled.textContent).toContain(
-      'No fue posible leer o parsear el archivo seleccionado. Usa un .mid, .midi, .xml o .musicxml valido.',
-    );
+    expect(compiled.textContent).toContain(siteContent.upload.errorState);
     expect(emissions).toEqual([null]);
   });
 });

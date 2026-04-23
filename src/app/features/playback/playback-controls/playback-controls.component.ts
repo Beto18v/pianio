@@ -1,10 +1,9 @@
 import { DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 
 import { siteContent } from '../../../core/site';
 import { KeyboardCalibrationService } from '../../../services/keyboard-calibration.service';
 import { MidiInputService } from '../../../services/midi-input.service';
-import { FrameBudgetService } from '../../../services/frame-budget.service';
 import { InstrumentPresetId } from '../../../services/playback-audio.service';
 import { PlaybackAudioService } from '../../../services/playback-audio.service';
 import {
@@ -12,7 +11,11 @@ import {
   MIN_PLAYBACK_RATE,
   PlaybackService,
 } from '../../../services/playback.service';
-import { HandMode, PlayerSettingsService } from '../../../services/player-settings.service';
+import {
+  HandMode,
+  NoteLabelFormat,
+  PlayerSettingsService,
+} from '../../../services/player-settings.service';
 import { PracticeService } from '../../../services/practice.service';
 
 @Component({
@@ -26,15 +29,12 @@ export class PlaybackControlsComponent {
   protected readonly site = siteContent;
   protected readonly playbackService = inject(PlaybackService);
   protected readonly playbackAudioService = inject(PlaybackAudioService);
-  protected readonly frameBudgetService = inject(FrameBudgetService);
   protected readonly practiceService = inject(PracticeService);
   protected readonly keyboardCalibrationService = inject(KeyboardCalibrationService);
   protected readonly midiInputService = inject(MidiInputService);
   protected readonly playerSettingsService = inject(PlayerSettingsService);
   protected readonly song = this.playbackService.song;
   protected readonly playbackState = this.playbackService.playbackState;
-  protected readonly frameBudgetSnapshot = this.frameBudgetService.snapshot;
-  protected readonly adaptiveGuardrails = this.frameBudgetService.guardrails;
   protected readonly hasSong = this.playbackService.hasSong;
   protected readonly canPlay = this.playbackService.canPlay;
   protected readonly practiceState = this.practiceService.state;
@@ -51,6 +51,8 @@ export class PlaybackControlsComponent {
   protected readonly masterVolume = this.playbackAudioService.masterVolume;
   protected readonly handMode = this.playerSettingsService.handMode;
   protected readonly showNoteLabels = this.playerSettingsService.showNoteLabels;
+  protected readonly noteLabelFormat = this.playerSettingsService.noteLabelFormat;
+  protected readonly isSettingsPanelOpen = signal(false);
   protected readonly minTempoPercent = Math.round(MIN_PLAYBACK_RATE * 100);
   protected readonly maxTempoPercent = Math.round(MAX_PLAYBACK_RATE * 100);
   protected readonly tempoScalePercent = computed(() =>
@@ -78,22 +80,6 @@ export class PlaybackControlsComponent {
   protected readonly hasExtraInputPitches = computed(
     () => this.practiceState().extraInputPitches.length > 0,
   );
-  protected readonly longFramePercent = computed(() =>
-    Math.round(this.frameBudgetSnapshot().longFrameRatio * 100),
-  );
-  protected readonly guardrailModeLabel = computed(() => {
-    const mode = this.adaptiveGuardrails().mode;
-
-    switch (mode) {
-      case 'adaptive':
-        return this.site.playback.performance.modes.adaptive;
-      case 'constrained':
-        return this.site.playback.performance.modes.constrained;
-      case 'stable':
-      default:
-        return this.site.playback.performance.modes.stable;
-    }
-  });
   protected readonly practiceMatchStatus = computed(() => {
     if (!this.isPracticeModeEnabled()) {
       return this.site.playback.practice.states.disabled;
@@ -172,6 +158,19 @@ export class PlaybackControlsComponent {
       this.instrumentPresetOptions[0]?.label ??
       this.site.playback.settings.fields.sound,
   );
+  protected readonly selectedNoteLabelFormatLabel = computed(() =>
+    this.noteLabelFormat() === 'solfege'
+      ? this.site.playback.settings.noteLabelFormats.solfege
+      : this.site.playback.settings.noteLabelFormats.letters,
+  );
+
+  protected toggleSettingsPanel(): void {
+    this.isSettingsPanelOpen.update((isOpen) => !isOpen);
+  }
+
+  protected closeSettingsPanel(): void {
+    this.isSettingsPanelOpen.set(false);
+  }
 
   protected play(): void {
     void this.playbackAudioService.prepareForPlayback();
@@ -274,6 +273,16 @@ export class PlaybackControlsComponent {
     }
 
     this.playerSettingsService.setShowNoteLabels(input.checked);
+  }
+
+  protected onNoteLabelFormatChange(event: Event): void {
+    const select = event.target as HTMLSelectElement | null;
+
+    if (!select) {
+      return;
+    }
+
+    this.playerSettingsService.setNoteLabelFormat(select.value as NoteLabelFormat);
   }
 
   protected formatPitchList(pitches: ReadonlyArray<number>): string {

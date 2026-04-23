@@ -46,6 +46,7 @@ export class NoteRainComponent implements AfterViewInit {
 
     return this.frameBudgetService.guardrails().mode !== 'constrained';
   });
+  protected readonly performanceMode = computed(() => this.frameBudgetService.guardrails().mode);
   private readonly quantizedRenderTime = computed(() => {
     const currentTime = this.currentTime();
     const mode = this.frameBudgetService.guardrails().mode;
@@ -87,6 +88,7 @@ export class NoteRainComponent implements AfterViewInit {
       this.songIndex(),
       this.noteAnnotations(),
       this.playerSettingsService.handMode(),
+      this.playerSettingsService.noteLabelFormat(),
     );
 
     return noteRainLayout;

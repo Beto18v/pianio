@@ -1,5 +1,11 @@
 @if (layout(); as noteRainLayout) {
-  <div class="note-rain" role="img" [attr.aria-label]="accessibleLabel()">
+  <div
+    class="note-rain"
+    role="img"
+    [class.note-rain--adaptive]="performanceMode() === 'adaptive'"
+    [class.note-rain--constrained]="performanceMode() === 'constrained'"
+    [attr.aria-label]="accessibleLabel()"
+  >
     <div
       class="note-rain__hit-line"
       aria-hidden="true"
@@ -17,14 +23,12 @@
           [class.note-rain__note--active]="note.isActive"
           [class.note-rain__note--hand-left]="note.hand === 'left'"
           [class.note-rain__note--hand-right]="note.hand === 'right'"
-          [class.note-rain__note--has-finger]="note.finger !== null"
           [style.left.%]="note.leftPercent"
           [style.width.%]="note.widthPercent"
-          [style.top.px]="note.topPx"
+          [style.transform]="note.transform"
           [style.height.px]="note.heightPx"
           [attr.data-pitch]="note.pitch"
           [attr.data-hand]="note.hand"
-          [attr.data-finger]="note.finger ?? ''"
         >
           @if (shouldRenderNoteLabels()) {
             <span class="note-rain__label">{{ note.label }}</span>

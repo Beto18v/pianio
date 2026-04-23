@@ -4,7 +4,6 @@ import {
   NoteAnnotation,
   NoteAnnotationSourceCount,
   NoteAnnotationMap,
-  NoteFinger,
   NoteHand,
   SongAnalysis,
 } from '../domain/models/note-annotation.model';
@@ -54,7 +53,6 @@ function buildSongAnalysis(song: MidiSong): SongAnalysis {
   const handByNoteKey = hasMultipleTracks(notes)
     ? assignHandsByTrack(song.notes)
     : assignHandsByPitchSplit(groupedNotes);
-  const fingerByNoteKey = assignChordFingers(groupedNotes, handByNoteKey);
   const noteAnnotations: Record<string, NoteAnnotation> = {};
   const handSources: NoteAnnotationSourceCount = { ...INITIAL_SOURCE_COUNT };
   const fingerSources: NoteAnnotationSourceCount = { ...INITIAL_SOURCE_COUNT };
@@ -63,9 +61,8 @@ function buildSongAnalysis(song: MidiSong): SongAnalysis {
     const noteKey = createNoteKey(note);
     const fileAnnotation = fileNoteAnnotations[noteKey];
     const inferredHand = handByNoteKey.get(noteKey) ?? 'unknown';
-    const inferredFinger = fingerByNoteKey.get(noteKey) ?? null;
     const handSource = resolveHandSource(fileAnnotation, inferredHand);
-    const fingerSource = resolveFingerSource(fileAnnotation, inferredFinger);
+    const fingerSource = resolveFingerSource(fileAnnotation);
 
     handSources[handSource] += 1;
     fingerSources[fingerSource] += 1;
@@ -80,9 +77,7 @@ function buildSongAnalysis(song: MidiSong): SongAnalysis {
       finger:
         fingerSource === 'file'
           ? (fileAnnotation?.finger ?? null)
-          : fingerSource === 'inferred'
-            ? inferredFinger
-            : null,
+          : null,
       handSource,
       fingerSource,
     };
@@ -116,14 +111,9 @@ function resolveHandSource(
 
 function resolveFingerSource(
   fileAnnotation: NoteAnnotation | undefined,
-  inferredFinger: NoteFinger,
 ): NoteAnnotationSourceCountKey {
   if (fileAnnotation?.finger !== undefined && fileAnnotation.finger !== null) {
     return 'file';
-  }
-
-  if (inferredFinger !== null) {
-    return 'inferred';
   }
 
   return 'unavailable';
@@ -199,78 +189,6 @@ function assignHandsByPitchSplit(noteGroups: ReadonlyArray<NoteGroup>): Map<stri
   }
 
   return handByNoteKey;
-}
-
-function assignChordFingers(
-  noteGroups: ReadonlyArray<NoteGroup>,
-  handByNoteKey: ReadonlyMap<string, NoteHand>,
-): Map<string, NoteFinger> {
-  const fingerByNoteKey = new Map<string, NoteFinger>();
-
-  for (const group of noteGroups) {
-    assignGroupFingering(group.notes, 'left', handByNoteKey, fingerByNoteKey);
-    assignGroupFingering(group.notes, 'right', handByNoteKey, fingerByNoteKey);
-  }
-
-  return fingerByNoteKey;
-}
-
-function assignGroupFingering(
-  groupNotes: ReadonlyArray<NoteEvent>,
-  hand: Exclude<NoteHand, 'unknown'>,
-  handByNoteKey: ReadonlyMap<string, NoteHand>,
-  fingerByNoteKey: Map<string, NoteFinger>,
-): void {
-  const handNotes = groupNotes
-    .filter((note) => handByNoteKey.get(createNoteKey(note)) === hand)
-    .sort((left, right) => left.pitch - right.pitch || left.track - right.track);
-
-  if (handNotes.length < 2) {
-    return;
-  }
-
-  const selectedNotes =
-    handNotes.length <= 5
-      ? handNotes
-      : hand === 'right'
-        ? handNotes.slice(-5)
-        : handNotes.slice(0, 5);
-  const fingeringPattern =
-    hand === 'right'
-      ? getRightHandFingeringPattern(selectedNotes.length)
-      : getLeftHandFingeringPattern(selectedNotes.length);
-
-  selectedNotes.forEach((note, index) => {
-    fingerByNoteKey.set(createNoteKey(note), fingeringPattern[index] ?? null);
-  });
-}
-
-function getRightHandFingeringPattern(noteCount: number): ReadonlyArray<Exclude<NoteFinger, null>> {
-  switch (noteCount) {
-    case 2:
-      return [1, 3];
-    case 3:
-      return [1, 3, 5];
-    case 4:
-      return [1, 2, 4, 5];
-    case 5:
-    default:
-      return [1, 2, 3, 4, 5];
-  }
-}
-
-function getLeftHandFingeringPattern(noteCount: number): ReadonlyArray<Exclude<NoteFinger, null>> {
-  switch (noteCount) {
-    case 2:
-      return [5, 3];
-    case 3:
-      return [5, 3, 1];
-    case 4:
-      return [5, 4, 2, 1];
-    case 5:
-    default:
-      return [5, 4, 3, 2, 1];
-  }
 }
 
 function createNoteGroups(notes: ReadonlyArray<NoteEvent>): ReadonlyArray<NoteGroup> {

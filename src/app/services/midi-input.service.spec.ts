@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 
+import { siteContent } from '../core/site';
 import { MidiInputService } from './midi-input.service';
 
 describe('MidiInputService', () => {
@@ -16,7 +17,7 @@ describe('MidiInputService', () => {
 
     expect(service.connectionState()).toBe('mock');
     expect(service.devices()).toHaveLength(1);
-    expect(service.errorMessage()).toBe('Web MIDI API no esta disponible en este navegador.');
+    expect(service.errorMessage()).toBe(siteContent.midiInput.errors.webMidiNotAvailable);
 
     service.triggerMockNote();
 
@@ -71,7 +72,7 @@ describe('MidiInputService', () => {
 
     expect(service.connectionState()).toBe('mock');
     expect(service.errorMessage()).toContain('SecurityError');
-    expect(service.errorMessage()).toContain('permiso MIDI');
+    expect(service.errorMessage()).toBe(siteContent.midiInput.errors.blockedAccess('SecurityError'));
   });
 });
 

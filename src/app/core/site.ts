@@ -1,4 +1,5 @@
 export const siteContent = {
+  appName: 'Pianio',
   brand: {
     logoAlt: 'Logo de Pianio',
     stageTagline: 'Modo estudio en vivo',
@@ -12,7 +13,7 @@ export const siteContent = {
   welcome: {
     eyebrow: 'Empieza en segundos',
     title: 'Tu estudio de piano, claro y divertido.',
-    summary: 'Elige una cancion, ajusta tu teclado y empieza a tocar.',
+    summary: 'Ajusta tu teclado, elige una cancion y empieza a tocar.',
     description:
       'Practica a tu ritmo, repite lo que necesites y sigue cada nota con una guia visual simple.',
     highlights: [
@@ -187,6 +188,8 @@ export const siteContent = {
     eyebrow: 'Estudio',
     heading: 'Centro de practica',
     description: 'Controla reproduccion, manos, sonido y guia de practica sin salir de la escena.',
+    advancedTitle: 'Panel avanzado',
+    advancedDescription: 'Ajusta manos, sonido, practica y teclado.',
     idleState: 'Carga una cancion para habilitar el transporte y la practica.',
     tempo: {
       title: 'Velocidad',
@@ -216,7 +219,12 @@ export const siteContent = {
         hands: 'Manos',
         sound: 'Sonido',
         volume: 'Volumen',
-        noteLabels: 'Mostrar nombre de notas',
+        noteLabels: 'Mostrar notas',
+        noteLabelFormat: 'Formato de notas',
+      },
+      noteLabelFormats: {
+        letters: 'Letras (C, D, E)',
+        solfege: 'Solfeo (DO, RE, MI)',
       },
     },
     performance: {
@@ -327,6 +335,7 @@ export const siteContent = {
     fields: {
       state: 'Estado',
       devices: 'Dispositivos',
+      connectedDevices: 'Dispositivos conectados',
       event: 'Evento',
       note: 'Nota',
       velocity: 'Velocidad',

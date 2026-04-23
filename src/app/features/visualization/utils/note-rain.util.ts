@@ -15,6 +15,7 @@ import {
 import { KeyboardLayout } from '../models/keyboard-layout.model';
 import {
   MVP_KEYBOARD_LAYOUT,
+  PitchNameFormat,
   getPitchHorizontalPosition,
   getPitchName,
 } from './keyboard-layout.util';
@@ -42,6 +43,7 @@ export interface FallingNote {
   widthPercent: number;
   topPx: number;
   heightPx: number;
+  transform: string;
   isBlack: boolean;
   isActive: boolean;
 }
@@ -57,7 +59,7 @@ export const DEFAULT_NOTE_RAIN_LAYOUT_CONFIG: Readonly<NoteRainLayoutConfig> = {
   pixelsPerSecond: 180,
   hitLineOffsetPx: 28,
   minNoteHeightPx: 10,
-  maxVisibleNotes: 220,
+  maxVisibleNotes: 180,
 };
 
 export function getFallingNote(
@@ -66,6 +68,7 @@ export function getFallingNote(
   config: NoteRainLayoutConfig = DEFAULT_NOTE_RAIN_LAYOUT_CONFIG,
   keyboardLayout: KeyboardLayout = MVP_KEYBOARD_LAYOUT,
   noteAnnotation: NoteAnnotation | null = null,
+  noteLabelFormat: PitchNameFormat = 'letters',
 ): FallingNote | null {
   validateLayoutConfig(config);
 
@@ -90,7 +93,7 @@ export function getFallingNote(
 
   return {
     pitch: note.pitch,
-    label: getPitchName(note.pitch),
+    label: getPitchName(note.pitch, noteLabelFormat),
     velocity: note.velocity,
     startTime: note.startTime,
     duration: note.duration,
@@ -101,6 +104,7 @@ export function getFallingNote(
     widthPercent: horizontalPosition.widthPercent,
     topPx,
     heightPx,
+    transform: `translate3d(0, ${roundPixel(topPx)}px, 0)`,
     isBlack: horizontalPosition.isBlack,
     isActive: currentTime >= note.startTime && currentTime < note.startTime + note.duration,
   };
@@ -114,6 +118,7 @@ export function createNoteRainLayout(
   noteIndex: SongNoteIndex | null = null,
   noteAnnotations: NoteAnnotationMap = {},
   handMode: NoteRainHandMode = 'both',
+  noteLabelFormat: PitchNameFormat = 'letters',
 ): NoteRainLayout {
   validateLayoutConfig(config);
 
@@ -131,7 +136,14 @@ export function createNoteRainLayout(
       continue;
     }
 
-    const fallingNote = getFallingNote(note, currentTime, config, keyboardLayout, noteAnnotation);
+    const fallingNote = getFallingNote(
+      note,
+      currentTime,
+      config,
+      keyboardLayout,
+      noteAnnotation,
+      noteLabelFormat,
+    );
 
     if (fallingNote) {
       notes.push(fallingNote);
@@ -251,4 +263,8 @@ function validateLayoutConfig(config: NoteRainLayoutConfig): void {
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
+}
+
+function roundPixel(value: number): number {
+  return Math.round(value * 100) / 100;
 }

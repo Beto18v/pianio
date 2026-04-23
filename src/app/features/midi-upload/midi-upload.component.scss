@@ -37,13 +37,16 @@
 
 .upload-panel--compact .upload-panel__compact-layout {
   display: grid;
-  grid-template-columns: minmax(14rem, 1fr) auto auto;
+  grid-template-columns: minmax(16rem, 20rem) max-content max-content;
+  align-items: end;
   gap: 0.55rem;
 }
 
 .upload-panel--compact .upload-panel__choose-button {
-  min-height: 2.55rem;
-  padding: 0.45rem 0.85rem;
+  width: fit-content;
+  min-height: 2.35rem;
+  padding: 0.42rem 0.78rem;
+  white-space: nowrap;
 }
 
 .upload-panel__header {
@@ -152,6 +155,11 @@
   border-radius: 10px;
   background: rgb(14 22 62 / 0.76);
   color: var(--brand-text);
+}
+
+.upload-panel__select option {
+  background: #eaf4ff;
+  color: #111a34;
 }
 
 .upload-panel__selected-file {

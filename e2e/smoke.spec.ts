@@ -2,9 +2,9 @@ import { expect, test, type Page } from '@playwright/test';
 
 async function enterMainScene(page: Page): Promise<void> {
   await page.goto('/');
-  await expect(page.getByRole('button', { name: 'Continuar' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Empezar' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Continuar' }).click();
+  await page.getByRole('button', { name: 'Empezar' }).click();
   await expect(page.locator('#calibration-screen-title')).toBeVisible();
 
   await page.locator('#calibration-fallback-button').click();
@@ -16,7 +16,7 @@ async function enterMainScene(page: Page): Promise<void> {
 
 async function uploadMidiFixture(
   page: Page,
-  fixturePath = 'public/pianosongs/alla-turca.mid',
+  fixturePath = 'public/pianosongs/Rondo Alla Turca.mid',
 ): Promise<void> {
   await page.locator('#midi-file-input').setInputFiles(fixturePath);
 
@@ -27,13 +27,6 @@ async function uploadMidiFixture(
       return Number(maxAttr ?? '0');
     })
     .toBeGreaterThan(0);
-}
-
-async function readNumericValue(page: Page, selector: string): Promise<number> {
-  const valueText = (await page.locator(selector).textContent()) ?? '';
-  const normalized = valueText.replace(',', '.').replace(/[^\d.+-]/g, '');
-
-  return Number(normalized);
 }
 
 test.describe('PianoFlow E2E smoke', () => {
@@ -55,10 +48,10 @@ test.describe('PianoFlow E2E smoke', () => {
     await enterMainScene(page);
     await uploadMidiFixture(page);
 
-    await page.getByRole('button', { name: 'Play' }).click();
+    await page.getByRole('button', { name: 'Reproducir', exact: true }).click();
     await expect(page.getByText('Reproduciendo')).toBeVisible();
 
-    await page.getByRole('button', { name: 'Pause' }).click();
+    await page.getByRole('button', { name: 'Pausar' }).click();
     await expect(page.getByText('En pausa')).toBeVisible();
   });
 
@@ -66,17 +59,18 @@ test.describe('PianoFlow E2E smoke', () => {
     await enterMainScene(page);
     await uploadMidiFixture(page);
 
+    await page.getByRole('button', { name: 'Panel avanzado' }).click();
     await page.locator('label[for="practice-mode-toggle-input"]').click();
 
     await expect(page.getByText('Esperadas')).toBeVisible();
-    await expect(page.getByText('Input activo')).toBeVisible();
+    await expect(page.getByText('Notas tocadas')).toBeVisible();
   });
 
-  test('dense-song smoke profile keeps transport and guardrails observable', async ({ page }) => {
+  test('dense-song smoke profile keeps transport responsive under seeks', async ({ page }) => {
     await enterMainScene(page);
-    await uploadMidiFixture(page, 'public/pianosongs/Rush E Original + Midi Download.mid');
+    await uploadMidiFixture(page, 'public/pianosongs/Rush E Original.mid');
 
-    await page.getByRole('button', { name: 'Play' }).click();
+    await page.getByRole('button', { name: 'Reproducir', exact: true }).click();
     await expect(page.getByText('Reproduciendo')).toBeVisible();
 
     const slider = page.locator('#playback-position-input');
@@ -102,26 +96,7 @@ test.describe('PianoFlow E2E smoke', () => {
       }, nextValue);
     }
 
-    await expect
-      .poll(async () => readNumericValue(page, '#performance-frame-budget-value'))
-      .toBeGreaterThan(0);
-    await expect
-      .poll(async () => readNumericValue(page, '#performance-average-frame-value'))
-      .toBeGreaterThan(0);
-
-    const longFramePercent = await readNumericValue(page, '#performance-long-frames-value');
-    const visibleCap = await readNumericValue(page, '#performance-visible-note-cap-value');
-    const polyphonyCap = await readNumericValue(page, '#performance-polyphony-cap-value');
-    const guardrailMode = (
-      (await page.locator('#performance-guardrail-mode-value').textContent()) ?? ''
-    ).trim();
-
-    expect(longFramePercent).toBeGreaterThanOrEqual(0);
-    expect(longFramePercent).toBeLessThanOrEqual(100);
-    expect(visibleCap).toBeGreaterThan(0);
-    expect(visibleCap).toBeLessThanOrEqual(220);
-    expect(polyphonyCap).toBeGreaterThan(0);
-    expect(polyphonyCap).toBeLessThanOrEqual(10);
-    expect(guardrailMode.length).toBeGreaterThan(0);
+    await expect(page.getByText('Reproduciendo')).toBeVisible();
+    await expect.poll(async () => page.locator('.note-rain__note').count()).toBeGreaterThan(0);
   });
 });

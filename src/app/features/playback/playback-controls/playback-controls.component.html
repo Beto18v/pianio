@@ -1,359 +1,387 @@
-<section class="practice-hud" aria-labelledby="playback-controls-title">
-  <header class="practice-hud__header">
-    <p class="practice-hud__eyebrow">{{ site.playback.eyebrow }}</p>
-    <h2 id="playback-controls-title">{{ site.playback.heading }}</h2>
-    <p class="practice-hud__description">{{ site.playback.description }}</p>
-  </header>
+<section
+  class="practice-hud"
+  [class.practice-hud--settings-open]="isSettingsPanelOpen()"
+  aria-labelledby="playback-controls-title"
+>
+  <div class="practice-hud__quickbar">
+    <header class="practice-hud__top">
+      <div>
+        <p class="practice-hud__eyebrow">{{ site.playback.eyebrow }}</p>
+        <h2 id="playback-controls-title">{{ site.playback.heading }}</h2>
+      </div>
 
-  <section class="practice-hud__section" aria-labelledby="practice-hud-transport-title">
-    <div class="practice-hud__section-head">
-      <h3 id="practice-hud-transport-title">{{ site.playback.fields.status }}</h3>
-      @if (song(); as currentSong) {
-        <span class="practice-hud__section-value">{{ currentSong.fileName }}</span>
+      <button
+        class="practice-hud__settings-toggle"
+        type="button"
+        aria-controls="practice-settings-panel"
+        [attr.aria-expanded]="isSettingsPanelOpen()"
+        (click)="toggleSettingsPanel()"
+      >
+        <span class="practice-hud__sr-only">{{ site.playback.advancedTitle }}</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path
+            d="M19.4 13.5a7.8 7.8 0 0 0 0-3l2-1.2-2-3.5-2.3 1a8 8 0 0 0-2.6-1.5L14.2 3h-4.4l-.3 2.3A8 8 0 0 0 6.9 6.8l-2.3-1-2 3.5 2 1.2a7.8 7.8 0 0 0 0 3l-2 1.2 2 3.5 2.3-1a8 8 0 0 0 2.6 1.5l.3 2.3h4.4l.3-2.3a8 8 0 0 0 2.6-1.5l2.3 1 2-3.5-2-1.2ZM12 15.3A3.3 3.3 0 1 1 12 8.7a3.3 3.3 0 0 1 0 6.6Z"
+          />
+        </svg>
+      </button>
+    </header>
+
+    <section class="practice-hud__section practice-hud__section--primary">
+      <div class="practice-hud__section-head">
+        <h3 id="practice-hud-transport-title">{{ site.playback.fields.status }}</h3>
+        @if (song(); as currentSong) {
+          <span class="practice-hud__section-value">{{ currentSong.fileName }}</span>
+        }
+      </div>
+
+      @if (song()) {
+        <dl class="practice-hud__stats practice-hud__stats--compact">
+          <div>
+            <dt>{{ site.playback.fields.currentTime }}</dt>
+            <dd>{{ playbackState().currentTime | number: '1.0-2' }} s</dd>
+          </div>
+          <div>
+            <dt>{{ site.playback.fields.duration }}</dt>
+            <dd>{{ playbackState().duration | number: '1.0-2' }} s</dd>
+          </div>
+          <div>
+            <dt>{{ site.playback.fields.status }}</dt>
+            <dd>
+              {{
+                playbackState().isPlaying
+                  ? site.playback.states.playing
+                  : site.playback.states.paused
+              }}
+            </dd>
+          </div>
+        </dl>
+      } @else {
+        <p class="practice-hud__status">{{ site.playback.idleState }}</p>
       }
-    </div>
 
-    @if (song()) {
-      <dl class="practice-hud__stats">
-        <div>
-          <dt>{{ site.playback.fields.currentTime }}</dt>
-          <dd>{{ playbackState().currentTime | number: '1.0-2' }} s</dd>
-        </div>
-        <div>
-          <dt>{{ site.playback.fields.duration }}</dt>
-          <dd>{{ playbackState().duration | number: '1.0-2' }} s</dd>
-        </div>
-        <div>
-          <dt>{{ site.playback.fields.status }}</dt>
-          <dd>
-            {{
-              playbackState().isPlaying ? site.playback.states.playing : site.playback.states.paused
-            }}
-          </dd>
-        </div>
-      </dl>
-    } @else {
-      <p class="practice-hud__status">{{ site.playback.idleState }}</p>
-    }
-  </section>
+      <div class="practice-hud__quick-controls">
+        <label class="practice-hud__seek" for="playback-tempo-input">
+          <span>{{ site.playback.tempo.title }}: {{ tempoScalePercent() }}%</span>
+          <input
+            id="playback-tempo-input"
+            class="practice-hud__slider"
+            type="range"
+            [min]="minTempoPercent"
+            [max]="maxTempoPercent"
+            step="1"
+            [value]="tempoScalePercent()"
+            [disabled]="!hasSong()"
+            (input)="onTempoScaleInput($event)"
+          />
+        </label>
 
-  <section class="practice-hud__section" aria-labelledby="practice-hud-performance-title">
-    <div class="practice-hud__section-head">
-      <h3 id="practice-hud-tempo-title">{{ site.playback.tempo.title }}</h3>
-      <span class="practice-hud__section-value">{{ tempoScalePercent() }}%</span>
-    </div>
-
-    <p class="practice-hud__status practice-hud__status--subtle">{{ site.playback.tempo.hint }}</p>
-
-    <dl class="practice-hud__stats practice-hud__stats--compact">
-      <div>
-        <dt>{{ site.playback.tempo.fields.midiBpm }}</dt>
-        <dd>
-          @if (midiTempoBpm(); as bpm) {
-            {{ bpm | number: '1.0-0' }}
-          } @else {
-            {{ site.playback.tempo.unknownBpm }}
-          }
-        </dd>
+        <label class="practice-hud__seek" for="practice-master-volume-input">
+          <span>
+            {{ site.playback.settings.fields.volume }}: {{ masterVolumePercent() }}%
+          </span>
+          <input
+            id="practice-master-volume-input"
+            class="practice-hud__slider"
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            [value]="masterVolumePercent()"
+            (input)="onMasterVolumeInput($event)"
+          />
+        </label>
       </div>
-      <div>
-        <dt>{{ site.playback.tempo.fields.effectiveBpm }}</dt>
-        <dd>
-          @if (effectiveTempoBpm(); as bpm) {
-            {{ bpm | number: '1.0-0' }}
-          } @else {
-            {{ site.playback.tempo.unknownBpm }}
-          }
-        </dd>
+
+      <div class="practice-hud__actions">
+        <button
+          id="playback-play-button"
+          class="practice-hud__button"
+          type="button"
+          (click)="play()"
+          [disabled]="!canPlay() || playbackState().isPlaying"
+        >
+          {{ site.playback.actions.play }}
+        </button>
+        <button
+          id="playback-pause-button"
+          class="practice-hud__button"
+          type="button"
+          (click)="pause()"
+          [disabled]="!playbackState().isPlaying"
+        >
+          {{ site.playback.actions.pause }}
+        </button>
+        <button
+          id="playback-stop-button"
+          class="practice-hud__button practice-hud__button--ghost"
+          type="button"
+          (click)="stop()"
+          [disabled]="isStopDisabled()"
+        >
+          {{ site.playback.actions.stop }}
+        </button>
       </div>
-    </dl>
 
-    <label class="practice-hud__seek" for="playback-tempo-input">
-      <span>{{ site.playback.tempo.fields.scale }}: {{ tempoScalePercent() }}%</span>
-      <input
-        id="playback-tempo-input"
-        class="practice-hud__slider"
-        type="range"
-        [min]="minTempoPercent"
-        [max]="maxTempoPercent"
-        step="1"
-        [value]="tempoScalePercent()"
-        [disabled]="!hasSong()"
-        (input)="onTempoScaleInput($event)"
-      />
-    </label>
-  </section>
-
-  <section class="practice-hud__section" aria-labelledby="practice-hud-settings-title">
-    <div class="practice-hud__section-head">
-      <h3 id="practice-hud-settings-title">{{ site.playback.settings.title }}</h3>
-      <span class="practice-hud__section-value">{{ selectedHandModeLabel() }}</span>
-    </div>
-
-    <div class="practice-hud__control-grid">
-      <label class="practice-hud__field" for="practice-hand-mode-input">
-        <span>{{ site.playback.settings.fields.hands }}</span>
-        <select
-          id="practice-hand-mode-input"
-          class="practice-hud__select"
-          [value]="handMode()"
-          [disabled]="!hasSong()"
-          (change)="onHandModeChange($event)"
-        >
-          <option value="both">{{ site.playback.settings.handModes.both }}</option>
-          <option value="left">{{ site.playback.settings.handModes.left }}</option>
-          <option value="right">{{ site.playback.settings.handModes.right }}</option>
-        </select>
-      </label>
-
-      <label class="practice-hud__field" for="practice-sound-preset-input">
-        <span>{{ site.playback.settings.fields.sound }}</span>
-        <select
-          id="practice-sound-preset-input"
-          class="practice-hud__select"
-          [value]="selectedPresetId()"
-          (change)="onInstrumentPresetChange($event)"
-        >
-          @for (preset of instrumentPresetOptions; track preset.id) {
-            <option [value]="preset.id">{{ preset.label }}</option>
-          }
-        </select>
-      </label>
-
-      <label class="practice-hud__seek" for="practice-master-volume-input">
-        <span>
-          {{ site.playback.settings.fields.volume }}: {{ masterVolumePercent() }}%
-        </span>
+      <label class="practice-hud__seek" for="playback-position-input">
+        <span>{{ site.playback.fields.position }}</span>
         <input
-          id="practice-master-volume-input"
+          id="playback-position-input"
           class="practice-hud__slider"
           type="range"
           min="0"
-          max="100"
-          step="1"
-          [value]="masterVolumePercent()"
-          (input)="onMasterVolumeInput($event)"
+          [max]="playbackState().duration"
+          step="0.01"
+          [value]="playbackState().currentTime"
+          [disabled]="!canPlay()"
+          (input)="onSeek($event)"
         />
       </label>
+    </section>
+  </div>
 
-      <label class="practice-hud__checkbox" for="practice-note-labels-toggle">
-        <input
-          id="practice-note-labels-toggle"
-          type="checkbox"
-          [checked]="showNoteLabels()"
-          (change)="onShowNoteLabelsToggle($event)"
-        />
-        <span>{{ site.playback.settings.fields.noteLabels }}</span>
-      </label>
-    </div>
+  @if (isSettingsPanelOpen()) {
+    <button
+      class="practice-hud__scrim"
+      type="button"
+      aria-label="Cerrar panel avanzado"
+      (click)="closeSettingsPanel()"
+    ></button>
+  }
 
-    <p class="practice-hud__status practice-hud__status--subtle">
-      {{ site.playback.settings.hint }}
-    </p>
-  </section>
+  <aside
+    id="practice-settings-panel"
+    class="practice-hud__drawer"
+    [attr.aria-hidden]="!isSettingsPanelOpen()"
+  >
+    <header class="practice-hud__drawer-header">
+      <div>
+        <p class="practice-hud__eyebrow">{{ site.playback.eyebrow }}</p>
+        <h2>{{ site.playback.advancedTitle }}</h2>
+        <p class="practice-hud__description">{{ site.playback.advancedDescription }}</p>
+      </div>
 
-  <section class="practice-hud__section" aria-labelledby="practice-hud-performance-title">
-    <div class="practice-hud__section-head">
-      <h3 id="practice-hud-performance-title">{{ site.playback.performance.title }}</h3>
-      <span class="practice-hud__section-value">{{ guardrailModeLabel() }}</span>
-    </div>
-
-    <dl class="practice-hud__stats practice-hud__stats--performance">
-      <div>
-        <dt>{{ site.playback.performance.fields.frameBudget }}</dt>
-        <dd id="performance-frame-budget-value">
-          {{ frameBudgetSnapshot().targetFrameMs | number: '1.0-2' }} ms
-        </dd>
-      </div>
-      <div>
-        <dt>{{ site.playback.performance.fields.averageFrame }}</dt>
-        <dd id="performance-average-frame-value">
-          {{ frameBudgetSnapshot().averageFrameMs | number: '1.0-2' }} ms
-        </dd>
-      </div>
-      <div>
-        <dt>{{ site.playback.performance.fields.longFrames }}</dt>
-        <dd id="performance-long-frames-value">{{ longFramePercent() }}%</dd>
-      </div>
-      <div>
-        <dt>{{ site.playback.performance.fields.visibleNoteCap }}</dt>
-        <dd id="performance-visible-note-cap-value">{{ adaptiveGuardrails().visibleNoteCap }}</dd>
-      </div>
-      <div>
-        <dt>{{ site.playback.performance.fields.polyphonyCap }}</dt>
-        <dd id="performance-polyphony-cap-value">{{ adaptiveGuardrails().polyphonyCap }}</dd>
-      </div>
-      <div>
-        <dt>{{ site.playback.performance.fields.guardrailMode }}</dt>
-        <dd id="performance-guardrail-mode-value" class="practice-hud__chip">
-          {{ guardrailModeLabel() }}
-        </dd>
-      </div>
-    </dl>
-  </section>
-
-  <section class="practice-hud__section" aria-labelledby="practice-hud-calibration-title">
-    <div class="practice-hud__section-head">
-      <h3 id="practice-hud-calibration-title">{{ site.playback.calibration.title }}</h3>
-      <span class="practice-hud__section-value"
-        >{{ activeRange().firstLabel }} - {{ activeRange().lastLabel }}</span
-      >
-    </div>
-
-    <dl class="practice-hud__stats practice-hud__stats--compact">
-      <div>
-        <dt>{{ site.playback.calibration.fields.connection }}</dt>
-        <dd>{{ connectionStatusLabel() }}</dd>
-      </div>
-      <div>
-        <dt>{{ site.playback.calibration.fields.source }}</dt>
-        <dd>{{ calibrationSourceLabel() }}</dd>
-      </div>
-    </dl>
-
-    <div class="practice-hud__actions practice-hud__actions--secondary">
       <button
-        class="practice-hud__button practice-hud__button--ghost"
+        class="practice-hud__close-button"
         type="button"
-        (click)="recalibrate()"
+        aria-label="Cerrar panel avanzado"
+        (click)="closeSettingsPanel()"
       >
-        {{ site.playback.actions.recalibrate }}
+        x
       </button>
-      @if (isMockMode()) {
-        <button
-          class="practice-hud__button practice-hud__button--ghost"
-          type="button"
-          (click)="triggerMockNote()"
-        >
-          {{ site.playback.actions.simulate }}
-        </button>
-      }
-    </div>
-  </section>
+    </header>
 
-  <section class="practice-hud__section" aria-labelledby="practice-hud-practice-title">
-    <div class="practice-hud__section-head">
-      <h3 id="practice-hud-practice-title">{{ site.playback.practice.toggle }}</h3>
-      <label class="practice-hud__toggle" for="practice-mode-toggle-input">
-        <input
-          id="practice-mode-toggle-input"
-          class="practice-hud__toggle-input"
-          type="checkbox"
-          [checked]="isPracticeModeEnabled()"
-          [disabled]="!hasSong()"
-          (change)="onPracticeModeToggle($event)"
-        />
-        <span class="practice-hud__toggle-track" aria-hidden="true"></span>
-      </label>
-    </div>
-
-    <dl class="practice-hud__stats practice-hud__stats--practice">
-      <div>
-        <dt>{{ site.playback.practice.fields.matchStatus }}</dt>
-        <dd class="practice-hud__chip">{{ practiceMatchStatus() }}</dd>
+    <section class="practice-hud__section" aria-labelledby="practice-hud-tempo-title">
+      <div class="practice-hud__section-head">
+        <h3 id="practice-hud-tempo-title">{{ site.playback.tempo.title }}</h3>
+        <span class="practice-hud__section-value">{{ tempoScalePercent() }}%</span>
       </div>
-      <div>
-        <dt>{{ site.playback.practice.fields.waitMode }}</dt>
-        <dd class="practice-hud__chip">{{ practiceWaitModeStatus() }}</dd>
-      </div>
-    </dl>
 
-    @if (isPracticeDetailsVisible()) {
-      <dl class="practice-hud__stats practice-hud__stats--practice practice-hud__stats--detail">
+      <p class="practice-hud__status practice-hud__status--subtle">
+        {{ site.playback.tempo.hint }}
+      </p>
+
+      <dl class="practice-hud__stats practice-hud__stats--compact">
         <div>
-          <dt>{{ site.playback.practice.fields.expected }}</dt>
-          <dd>{{ formatPitchList(practiceState().expectedPitches) }}</dd>
-        </div>
-        <div>
-          <dt>{{ site.playback.practice.fields.activeInput }}</dt>
-          <dd>{{ formatPitchList(practiceState().activeInputPitches) }}</dd>
-        </div>
-        <div>
-          <dt>{{ site.playback.practice.fields.matched }}</dt>
-          <dd class="practice-hud__value practice-hud__value--positive">
-            {{ formatPitchList(practiceState().matchedPitches) }}
+          <dt>{{ site.playback.tempo.fields.midiBpm }}</dt>
+          <dd>
+            @if (midiTempoBpm(); as bpm) {
+              {{ bpm | number: '1.0-0' }}
+            } @else {
+              {{ site.playback.tempo.unknownBpm }}
+            }
           </dd>
         </div>
         <div>
-          <dt>{{ site.playback.practice.fields.missing }}</dt>
-          <dd
-            class="practice-hud__value"
-            [class.practice-hud__value--warning]="practiceState().missingPitches.length > 0"
-          >
-            {{ formatPitchList(practiceState().missingPitches) }}
-          </dd>
-        </div>
-        <div>
-          <dt>{{ site.playback.practice.fields.extra }}</dt>
-          <dd
-            class="practice-hud__value"
-            [class.practice-hud__value--caution]="practiceState().extraInputPitches.length > 0"
-          >
-            {{ formatPitchList(practiceState().extraInputPitches) }}
+          <dt>{{ site.playback.tempo.fields.effectiveBpm }}</dt>
+          <dd>
+            @if (effectiveTempoBpm(); as bpm) {
+              {{ bpm | number: '1.0-0' }}
+            } @else {
+              {{ site.playback.tempo.unknownBpm }}
+            }
           </dd>
         </div>
       </dl>
-    } @else {
+    </section>
+
+    <section class="practice-hud__section" aria-labelledby="practice-hud-settings-title">
+      <div class="practice-hud__section-head">
+        <h3 id="practice-hud-settings-title">{{ site.playback.settings.title }}</h3>
+        <span class="practice-hud__section-value">{{ selectedHandModeLabel() }}</span>
+      </div>
+
+      <div class="practice-hud__control-grid">
+        <label class="practice-hud__field" for="practice-hand-mode-input">
+          <span>{{ site.playback.settings.fields.hands }}</span>
+          <select
+            id="practice-hand-mode-input"
+            class="practice-hud__select"
+            [value]="handMode()"
+            [disabled]="!hasSong()"
+            (change)="onHandModeChange($event)"
+          >
+            <option value="both">{{ site.playback.settings.handModes.both }}</option>
+            <option value="left">{{ site.playback.settings.handModes.left }}</option>
+            <option value="right">{{ site.playback.settings.handModes.right }}</option>
+          </select>
+        </label>
+
+        <label class="practice-hud__field" for="practice-sound-preset-input">
+          <span>{{ site.playback.settings.fields.sound }}</span>
+          <select
+            id="practice-sound-preset-input"
+            class="practice-hud__select"
+            [value]="selectedPresetId()"
+            (change)="onInstrumentPresetChange($event)"
+          >
+            @for (preset of instrumentPresetOptions; track preset.id) {
+              <option [value]="preset.id">{{ preset.label }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="practice-hud__checkbox" for="practice-note-labels-toggle">
+          <input
+            id="practice-note-labels-toggle"
+            type="checkbox"
+            [checked]="showNoteLabels()"
+            (change)="onShowNoteLabelsToggle($event)"
+          />
+          <span>{{ site.playback.settings.fields.noteLabels }}</span>
+        </label>
+
+        <label class="practice-hud__field" for="practice-note-label-format-input">
+          <span>{{ site.playback.settings.fields.noteLabelFormat }}</span>
+          <select
+            id="practice-note-label-format-input"
+            class="practice-hud__select"
+            [value]="noteLabelFormat()"
+            (change)="onNoteLabelFormatChange($event)"
+          >
+            <option value="letters">{{ site.playback.settings.noteLabelFormats.letters }}</option>
+            <option value="solfege">{{ site.playback.settings.noteLabelFormats.solfege }}</option>
+          </select>
+        </label>
+      </div>
+
       <p class="practice-hud__status practice-hud__status--subtle">
-        {{ site.playback.practice.inactiveHint }}
+        {{ site.playback.settings.hint }} {{ selectedNoteLabelFormatLabel() }}.
       </p>
-    }
+    </section>
 
-    @if (shouldBlockPlayback()) {
-      <p class="practice-hud__status practice-hud__status--warning">
-        {{ site.playback.practice.blockedStatus }}
-      </p>
-    }
-  </section>
+    <section class="practice-hud__section" aria-labelledby="practice-hud-practice-title">
+      <div class="practice-hud__section-head">
+        <h3 id="practice-hud-practice-title">{{ site.playback.practice.toggle }}</h3>
+        <label class="practice-hud__toggle" for="practice-mode-toggle-input">
+          <input
+            id="practice-mode-toggle-input"
+            class="practice-hud__toggle-input"
+            type="checkbox"
+            [checked]="isPracticeModeEnabled()"
+            [disabled]="!hasSong()"
+            (change)="onPracticeModeToggle($event)"
+          />
+          <span class="practice-hud__toggle-track" aria-hidden="true"></span>
+        </label>
+      </div>
 
-  <section class="practice-hud__section" aria-labelledby="practice-hud-actions-title">
-    <h3 id="practice-hud-actions-title" class="practice-hud__sr-only">
-      {{ site.playback.heading }}
-    </h3>
+      <dl class="practice-hud__stats practice-hud__stats--practice">
+        <div>
+          <dt>{{ site.playback.practice.fields.matchStatus }}</dt>
+          <dd class="practice-hud__chip">{{ practiceMatchStatus() }}</dd>
+        </div>
+        <div>
+          <dt>{{ site.playback.practice.fields.waitMode }}</dt>
+          <dd class="practice-hud__chip">{{ practiceWaitModeStatus() }}</dd>
+        </div>
+      </dl>
 
-    <div class="practice-hud__actions">
-      <button
-        id="playback-play-button"
-        class="practice-hud__button"
-        type="button"
-        (click)="play()"
-        [disabled]="!canPlay() || playbackState().isPlaying"
-      >
-        {{ site.playback.actions.play }}
-      </button>
-      <button
-        id="playback-pause-button"
-        class="practice-hud__button"
-        type="button"
-        (click)="pause()"
-        [disabled]="!playbackState().isPlaying"
-      >
-        {{ site.playback.actions.pause }}
-      </button>
-      <button
-        id="playback-stop-button"
-        class="practice-hud__button practice-hud__button--ghost"
-        type="button"
-        (click)="stop()"
-        [disabled]="isStopDisabled()"
-      >
-        {{ site.playback.actions.stop }}
-      </button>
-    </div>
+      @if (isPracticeDetailsVisible()) {
+        <dl class="practice-hud__stats practice-hud__stats--practice practice-hud__stats--detail">
+          <div>
+            <dt>{{ site.playback.practice.fields.expected }}</dt>
+            <dd>{{ formatPitchList(practiceState().expectedPitches) }}</dd>
+          </div>
+          <div>
+            <dt>{{ site.playback.practice.fields.activeInput }}</dt>
+            <dd>{{ formatPitchList(practiceState().activeInputPitches) }}</dd>
+          </div>
+          <div>
+            <dt>{{ site.playback.practice.fields.matched }}</dt>
+            <dd class="practice-hud__value practice-hud__value--positive">
+              {{ formatPitchList(practiceState().matchedPitches) }}
+            </dd>
+          </div>
+          <div>
+            <dt>{{ site.playback.practice.fields.missing }}</dt>
+            <dd
+              class="practice-hud__value"
+              [class.practice-hud__value--warning]="practiceState().missingPitches.length > 0"
+            >
+              {{ formatPitchList(practiceState().missingPitches) }}
+            </dd>
+          </div>
+          <div>
+            <dt>{{ site.playback.practice.fields.extra }}</dt>
+            <dd
+              class="practice-hud__value"
+              [class.practice-hud__value--caution]="practiceState().extraInputPitches.length > 0"
+            >
+              {{ formatPitchList(practiceState().extraInputPitches) }}
+            </dd>
+          </div>
+        </dl>
+      } @else {
+        <p class="practice-hud__status practice-hud__status--subtle">
+          {{ site.playback.practice.inactiveHint }}
+        </p>
+      }
 
-    <label class="practice-hud__seek" for="playback-position-input">
-      <span>{{ site.playback.fields.position }}</span>
-      <input
-        id="playback-position-input"
-        class="practice-hud__slider"
-        type="range"
-        min="0"
-        [max]="playbackState().duration"
-        step="0.01"
-        [value]="playbackState().currentTime"
-        [disabled]="!canPlay()"
-        (input)="onSeek($event)"
-      />
-    </label>
-  </section>
+      @if (shouldBlockPlayback()) {
+        <p class="practice-hud__status practice-hud__status--warning">
+          {{ site.playback.practice.blockedStatus }}
+        </p>
+      }
+    </section>
+
+    <section class="practice-hud__section" aria-labelledby="practice-hud-calibration-title">
+      <div class="practice-hud__section-head">
+        <h3 id="practice-hud-calibration-title">{{ site.playback.calibration.title }}</h3>
+        <span class="practice-hud__section-value">
+          {{ activeRange().firstLabel }} - {{ activeRange().lastLabel }}
+        </span>
+      </div>
+
+      <dl class="practice-hud__stats practice-hud__stats--compact">
+        <div>
+          <dt>{{ site.playback.calibration.fields.connection }}</dt>
+          <dd>{{ connectionStatusLabel() }}</dd>
+        </div>
+        <div>
+          <dt>{{ site.playback.calibration.fields.source }}</dt>
+          <dd>{{ calibrationSourceLabel() }}</dd>
+        </div>
+      </dl>
+
+      <div class="practice-hud__actions practice-hud__actions--secondary">
+        <button
+          class="practice-hud__button practice-hud__button--ghost"
+          type="button"
+          (click)="recalibrate()"
+        >
+          {{ site.playback.actions.recalibrate }}
+        </button>
+        @if (isMockMode()) {
+          <button
+            class="practice-hud__button practice-hud__button--ghost"
+            type="button"
+            (click)="triggerMockNote()"
+          >
+            {{ site.playback.actions.simulate }}
+          </button>
+        }
+      </div>
+    </section>
+
+  </aside>
 </section>

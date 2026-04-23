@@ -37,7 +37,7 @@ describe('SongAnalysisService', () => {
     expect(analysis.fingerSources).toEqual({ file: 0, inferred: 0, unavailable: 4 });
   });
 
-  it('assigns chord fingering suggestions for both hands in single-track fallback', () => {
+  it('assigns hand fallback without inferring fingering suggestions', () => {
     const song: MidiSong = {
       fileName: 'chord.mid',
       duration: 1,
@@ -56,30 +56,30 @@ describe('SongAnalysisService', () => {
 
     expect(analysis.noteAnnotations[createNoteKey(song.notes[0])]).toMatchObject({
       hand: 'left',
-      finger: 5,
+      finger: null,
       handSource: 'inferred',
-      fingerSource: 'inferred',
+      fingerSource: 'unavailable',
     });
     expect(analysis.noteAnnotations[createNoteKey(song.notes[1])]).toMatchObject({
       hand: 'left',
-      finger: 3,
+      finger: null,
       handSource: 'inferred',
-      fingerSource: 'inferred',
+      fingerSource: 'unavailable',
     });
     expect(analysis.noteAnnotations[createNoteKey(song.notes[2])]).toMatchObject({
       hand: 'right',
-      finger: 1,
+      finger: null,
       handSource: 'inferred',
-      fingerSource: 'inferred',
+      fingerSource: 'unavailable',
     });
     expect(analysis.noteAnnotations[createNoteKey(song.notes[3])]).toMatchObject({
       hand: 'right',
-      finger: 3,
+      finger: null,
       handSource: 'inferred',
-      fingerSource: 'inferred',
+      fingerSource: 'unavailable',
     });
     expect(analysis.handSources).toEqual({ file: 0, inferred: 4, unavailable: 0 });
-    expect(analysis.fingerSources).toEqual({ file: 0, inferred: 4, unavailable: 0 });
+    expect(analysis.fingerSources).toEqual({ file: 0, inferred: 0, unavailable: 4 });
   });
 
   it('prefers file annotations when provided and keeps source counters', () => {
