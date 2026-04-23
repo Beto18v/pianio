@@ -16,6 +16,9 @@ const FORWARD_RESET_THRESHOLD_SECONDS = 0.55;
 const BACKWARD_RESET_THRESHOLD_SECONDS = -0.03;
 const DEFAULT_RELEASE_SECONDS = 0.05;
 const DEFAULT_MASTER_VOLUME = 0.68;
+const POLYPHONY_GAIN_EXPONENT = 0.32;
+const DENSE_CHORD_MAKEUP_STEP = 0.025;
+const MAX_DENSE_CHORD_MAKEUP = 1.32;
 const playbackCopy = siteContent.playback;
 
 export type InstrumentPresetId = 'acoustic-grand' | 'bright-grand' | 'electric-piano' | 'warm-pad';
@@ -54,17 +57,17 @@ const INSTRUMENT_PRESETS: Readonly<Record<InstrumentPresetId, InstrumentPreset>>
     id: 'acoustic-grand',
     label: playbackCopy.settings.instrumentPresets.acousticGrand,
     oscillatorType: 'triangle',
-    harmonics: [0.75, 0.3, 0.16, 0.09, 0.06, 0.04, 0.028, 0.02, 0.014, 0.01],
-    voiceGain: 0.14,
-    attackSeconds: 0.008,
-    decaySeconds: 0.038,
-    sustainLevel: 0.66,
-    releaseSeconds: 0.05,
-    filterBaseHz: 850,
-    filterVelocityHz: 3200,
-    filterFrequencyMultiplier: 1.2,
-    filterMinHz: 650,
-    filterMaxHz: 6800,
+    harmonics: [1, 0.52, 0.3, 0.19, 0.13, 0.09, 0.065, 0.046, 0.033, 0.024, 0.017],
+    voiceGain: 0.17,
+    attackSeconds: 0.004,
+    decaySeconds: 0.085,
+    sustainLevel: 0.46,
+    releaseSeconds: 0.14,
+    filterBaseHz: 1020,
+    filterVelocityHz: 4700,
+    filterFrequencyMultiplier: 1.55,
+    filterMinHz: 720,
+    filterMaxHz: 9200,
   },
   'bright-grand': {
     id: 'bright-grand',
@@ -469,8 +472,10 @@ export class PlaybackAudioService {
     const filter = audioContext.createBiquadFilter();
     const gain = audioContext.createGain();
     const velocityGain = velocityToGain(note.velocity);
-    const polyphonyCompensation = 1 / Math.sqrt(Math.max(activeNoteCount, 1));
-    const voicePeakGain = velocityGain * instrumentPreset.voiceGain * polyphonyCompensation;
+    const polyphonyCompensation = getPolyphonyCompensation(activeNoteCount);
+    const densityMakeupGain = getDensityMakeupGain(activeNoteCount);
+    const voicePeakGain =
+      velocityGain * instrumentPreset.voiceGain * polyphonyCompensation * densityMakeupGain;
     const voiceSustainGain = voicePeakGain * instrumentPreset.sustainLevel;
     const filterCutoff = clamp(
       instrumentPreset.filterBaseHz +
@@ -570,11 +575,11 @@ export class PlaybackAudioService {
       this.masterCompressorNode = this.audioContext.createDynamicsCompressor();
 
       this.masterGainNode.gain.setValueAtTime(this.masterVolume(), this.audioContext.currentTime);
-      this.masterCompressorNode.threshold.setValueAtTime(-18, this.audioContext.currentTime);
-      this.masterCompressorNode.knee.setValueAtTime(12, this.audioContext.currentTime);
-      this.masterCompressorNode.ratio.setValueAtTime(8, this.audioContext.currentTime);
-      this.masterCompressorNode.attack.setValueAtTime(0.002, this.audioContext.currentTime);
-      this.masterCompressorNode.release.setValueAtTime(0.09, this.audioContext.currentTime);
+      this.masterCompressorNode.threshold.setValueAtTime(-14, this.audioContext.currentTime);
+      this.masterCompressorNode.knee.setValueAtTime(18, this.audioContext.currentTime);
+      this.masterCompressorNode.ratio.setValueAtTime(4.5, this.audioContext.currentTime);
+      this.masterCompressorNode.attack.setValueAtTime(0.004, this.audioContext.currentTime);
+      this.masterCompressorNode.release.setValueAtTime(0.16, this.audioContext.currentTime);
 
       this.masterGainNode.connect(this.masterCompressorNode);
       this.masterCompressorNode.connect(this.audioContext.destination);
@@ -681,6 +686,18 @@ function velocityToGain(velocity: number): number {
   const normalizedVelocity = normalizeVelocity(velocity);
 
   return Math.pow(normalizedVelocity, 1.45);
+}
+
+function getPolyphonyCompensation(activeNoteCount: number): number {
+  const safeActiveNoteCount = Math.max(1, activeNoteCount);
+
+  return 1 / Math.pow(safeActiveNoteCount, POLYPHONY_GAIN_EXPONENT);
+}
+
+function getDensityMakeupGain(activeNoteCount: number): number {
+  const additionalVoices = Math.max(0, activeNoteCount - 1);
+
+  return Math.min(1 + additionalVoices * DENSE_CHORD_MAKEUP_STEP, MAX_DENSE_CHORD_MAKEUP);
 }
 
 function clamp(value: number, min: number, max: number): number {

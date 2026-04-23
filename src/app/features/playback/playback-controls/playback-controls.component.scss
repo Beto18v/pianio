@@ -91,11 +91,18 @@
 }
 
 .practice-hud__drawer .practice-hud__section {
-  height: 100%;
   padding: 0.8rem;
   border: 1px solid rgb(160 186 255 / 0.18);
   border-radius: 12px;
   background: rgb(255 255 255 / 0.055);
+}
+
+.practice-hud__drawer .practice-hud__section--tempo {
+  gap: 0.65rem;
+}
+
+.practice-hud__section--tempo .practice-hud__stats {
+  margin-top: 0.15rem;
 }
 
 .practice-hud__drawer .practice-hud__section:last-child {
