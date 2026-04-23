@@ -1,11 +1,10 @@
 export const siteContent = {
-  appName: 'Pianio',
   brand: {
     logoAlt: 'Logo de Pianio',
     stageTagline: 'Modo estudio en vivo',
   },
   seo: {
-    title: 'Pianio | Practica piano con flow',
+    title: 'Pianio | Practica piano de forma divertida',
     description:
       'Aprende tus canciones favoritas con lluvia de notas, tempo flexible y practica guiada por manos.',
     keywords: ['piano midi', 'practicar piano', 'teclado midi', 'visualizador midi', 'pianio'],
@@ -47,20 +46,14 @@ export const siteContent = {
   calibration: {
     heading: 'Calibracion del teclado',
     description: 'Ajusta el rango de tu teclado para una practica mas comoda.',
-    idleTitle: 'Ajusta tu rango antes de practicar.',
-    idleDescription:
-      'Si tienes un teclado MIDI conectado, toca primero la tecla mas grave y luego la mas aguda.',
-    noHardwareTitle: 'No detectamos un teclado MIDI.',
-    noHardwareDescription:
-      'Puedes continuar con rango completo mientras conectas tu teclado o usar modo simulado.',
     waitingFirstKey: 'Toca la primera tecla.',
     waitingLastKey: 'Ahora toca la ultima tecla.',
     readyTitle: 'Calibracion lista',
-    readyDescription: 'Revisa tus datos, confirma el rango y entra al estudio cuando quieras.',
+    readyDescription: 'Confirma el rango de tu piano y entra al estudio cuando quieras.',
     connectionStates: {
       idle: 'Preparando conexion MIDI...',
       ready: 'Teclado MIDI listo para calibrar.',
-      mock: 'Modo simulado activo. Puedes continuar con rango completo.',
+      mock: 'Modo simulado activo. Conecta tu teclado para poder calibrarlo.',
     },
     mapping: {
       heading: 'Mapeo de notas',
