@@ -5,8 +5,8 @@ Everything runs locally in your browser: upload a `.mid/.midi`, visualize notes 
 
 This repository is split into:
 
-- `pianoflow-front`: this Angular application
-- `pianoflow-planning`: roadmap, architecture notes, and phase checklists
+- `pianio-front`: this Angular application
+- `pianio-planning`: roadmap, architecture notes, and phase checklists
 
 ---
 
@@ -44,11 +44,11 @@ This repository is split into:
 - Node.js + npm
 - For **Web MIDI**: a Chromium-based browser (Chrome / Edge)
   - Web MIDI requires a **secure context** (`https://` or `http://localhost`).
-  - If Web MIDI is not available, PianoFlow automatically switches to **mock mode**.
+  - If Web MIDI is not available, Pianio automatically switches to **mock mode**.
 
 ### Quick start
 
-From `pianoflow-front`:
+From `pianio-front`:
 
 ```bash
 npm install
@@ -103,7 +103,7 @@ High-level data flow:
 
 ### Planning docs
 
-See `../pianoflow-planning/` for:
+See `../pianio-planning/` for:
 
 - overall product overview and constraints
 - architecture notes and data models
@@ -145,11 +145,11 @@ See `../pianoflow-planning/` for:
 - Node.js + npm
 - Para **Web MIDI**: navegador Chromium (Chrome / Edge)
   - Web MIDI requiere **contexto seguro** (`https://` o `http://localhost`).
-  - Si Web MIDI no está disponible, PianoFlow activa **modo simulado** automáticamente.
+  - Si Web MIDI no está disponible, Pianio activa **modo simulado** automáticamente.
 
 ### Correr en local
 
-Desde `pianoflow-front`:
+Desde `pianio-front`:
 
 ```bash
 npm install
@@ -201,7 +201,3 @@ Flujo de datos principal:
 - `npm test` → unit tests
 - `npm run e2e` → smoke tests E2E con Playwright (headless, incluye perfil denso con seeks/guardrails)
 - `npm run e2e:ui` → Playwright en modo UI
-
-### Planning
-
-La documentación de roadmap/arquitectura/modelos vive en `../pianoflow-planning/`.
