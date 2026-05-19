@@ -20,10 +20,11 @@ This repository is split into:
   - a falling **note rain** overlay aligned to the calibrated keys and transport time
   - a side **practice HUD** (transport + practice state)
 - **Playback transport** (`play`, `pause`, `stop`, `seek`) owned by one service.
-- **Minimal audio playback** via Web Audio (intentionally simple; useful for timing verification).
+- **Minimal audio playback** via Web Audio with smoother envelopes for more fluid note transitions.
 - **Web MIDI input** (`noteOn`/`noteOff`) with a defensive **mock mode** fallback when hardware or Web MIDI is unavailable.
 - **Practice mode / wait mode**: when enabled, playback pauses on mismatch and resumes when the expected pitches are satisfied.
 - **Hand/fingering baseline analysis** available in note layouts (`hand` + chord-level fingering suggestion).
+- **Tempo control with BPM summary** (original vs effective) available in the HUD.
 - **Fluidity guardrails for dense songs**:
   - frame-budget tracking (target/average/long-frame ratio)
   - dynamic visible-note cap for note rain
@@ -121,10 +122,11 @@ See `../pianio-planning/` for:
   - una **lluvia de notas** alineada a las teclas visibles y al tiempo del transporte
   - un **HUD lateral** con transporte + estado de práctica
 - **Transporte de reproducción** (`play`, `pause`, `stop`, `seek`) controlado por un único servicio.
-- **Audio mínimo** con Web Audio (a propósito simple; útil para validar timing).
+- **Audio mínimo** con Web Audio y envolventes suavizadas para notas más fluidas.
 - **Entrada Web MIDI** (`noteOn`/`noteOff`) con **modo simulado** cuando no hay hardware o no existe Web MIDI.
 - **Modo práctica / wait mode**: cuando está activo, la reproducción se pausa si falta match y se reanuda al coincidir.
 - **Analisis baseline de mano/digitacion** disponible en layouts de notas (`hand` + sugerencia de digitacion de acordes).
+- **Control de velocidad con resumen BPM** (original vs efectivo) disponible en el HUD.
 - **Guardrails de fluidez para canciones densas**:
   - tracking de budget de frame (objetivo/promedio/frames largos)
   - cap dinamico de notas visibles en la lluvia

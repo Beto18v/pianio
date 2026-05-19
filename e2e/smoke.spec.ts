@@ -99,4 +99,21 @@ test.describe('PianoFlow E2E smoke', () => {
     await expect(page.getByText('Reproduciendo')).toBeVisible();
     await expect.poll(async () => page.locator('.note-rain__note').count()).toBeGreaterThan(0);
   });
+
+  test('speed control updates effective BPM text', async ({ page }) => {
+    await enterMainScene(page);
+    await uploadMidiFixture(page);
+
+    const tempoSlider = page.locator('#playback-tempo-input');
+    await tempoSlider.evaluate((input) => {
+      const element = input as HTMLInputElement;
+
+      element.value = '80';
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
+    await expect(page.getByText('BPM original')).toBeVisible();
+    await expect(page.getByText('BPM actual')).toBeVisible();
+    await expect(page.getByText('80')).toBeVisible();
+  });
 });

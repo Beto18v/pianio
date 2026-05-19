@@ -60,24 +60,49 @@
       }
 
       <div class="practice-hud__quick-controls">
-        <label class="practice-hud__seek" for="playback-tempo-input">
-          <span>{{ site.playback.tempo.title }}: {{ tempoScalePercent() }}%</span>
-          <input
-            id="playback-tempo-input"
-            class="practice-hud__slider"
-            type="range"
-            [min]="minTempoPercent"
-            [max]="maxTempoPercent"
-            step="1"
-            [value]="tempoScalePercent()"
+        <div class="practice-hud__tempo">
+          <label class="practice-hud__seek" for="playback-tempo-input">
+            <span>{{ site.playback.tempo.title }}: {{ sliderTempo() }}%</span>
+            <input
+              id="playback-tempo-input"
+              class="practice-hud__slider"
+              type="range"
+              [min]="minTempoPercent"
+              [max]="maxTempoPercent"
+              step="1"
+            value="100"
             [disabled]="!hasSong()"
             (input)="onTempoScaleInput($event)"
-          />
-        </label>
+            />
+          </label>
+
+          <dl class="practice-hud__tempo-summary" aria-live="polite">
+            <div>
+              <dt>{{ site.playback.tempo.fields.midiBpm }}</dt>
+              <dd>
+                @if (midiTempoBpm(); as bpm) {
+                  {{ bpm | number: '1.0-0' }}
+                } @else {
+                  {{ site.playback.tempo.unknownBpm }}
+                }
+              </dd>
+            </div>
+            <div>
+              <dt>{{ site.playback.tempo.fields.effectiveBpm }}</dt>
+              <dd>
+                @if (effectiveTempoBpm(); as bpm) {
+                  {{ bpm | number: '1.0-0' }}
+                } @else {
+                  {{ site.playback.tempo.unknownBpm }}
+                }
+              </dd>
+            </div>
+          </dl>
+        </div>
 
         <label class="practice-hud__seek" for="practice-master-volume-input">
           <span>
-            {{ site.playback.settings.fields.volume }}: {{ masterVolumePercent() }}%
+            {{ site.playback.settings.fields.volume }}: {{ sliderVolume() }}%
           </span>
           <input
             id="practice-master-volume-input"
@@ -86,7 +111,7 @@
             min="0"
             max="100"
             step="1"
-            [value]="masterVolumePercent()"
+            [value]="sliderVolume()"
             (input)="onMasterVolumeInput($event)"
           />
         </label>
@@ -169,43 +194,6 @@
         x
       </button>
     </header>
-
-    <section
-      class="practice-hud__section practice-hud__section--tempo"
-      aria-labelledby="practice-hud-tempo-title"
-    >
-      <div class="practice-hud__section-head">
-        <h3 id="practice-hud-tempo-title">{{ site.playback.tempo.title }}</h3>
-        <span class="practice-hud__section-value">{{ tempoScalePercent() }}%</span>
-      </div>
-
-      <p class="practice-hud__status practice-hud__status--subtle">
-        {{ site.playback.tempo.hint }}
-      </p>
-
-      <dl class="practice-hud__stats practice-hud__stats--compact">
-        <div>
-          <dt>{{ site.playback.tempo.fields.midiBpm }}</dt>
-          <dd>
-            @if (midiTempoBpm(); as bpm) {
-              {{ bpm | number: '1.0-0' }}
-            } @else {
-              {{ site.playback.tempo.unknownBpm }}
-            }
-          </dd>
-        </div>
-        <div>
-          <dt>{{ site.playback.tempo.fields.effectiveBpm }}</dt>
-          <dd>
-            @if (effectiveTempoBpm(); as bpm) {
-              {{ bpm | number: '1.0-0' }}
-            } @else {
-              {{ site.playback.tempo.unknownBpm }}
-            }
-          </dd>
-        </div>
-      </dl>
-    </section>
 
     <section class="practice-hud__section" aria-labelledby="practice-hud-settings-title">
       <div class="practice-hud__section-head">

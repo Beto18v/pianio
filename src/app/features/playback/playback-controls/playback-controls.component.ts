@@ -1,5 +1,5 @@
 import { DecimalPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 
 import { siteContent } from '../../../core/site';
 import { KeyboardCalibrationService } from '../../../services/keyboard-calibration.service';
@@ -7,6 +7,7 @@ import { MidiInputService } from '../../../services/midi-input.service';
 import { InstrumentPresetId } from '../../../services/playback-audio.service';
 import { PlaybackAudioService } from '../../../services/playback-audio.service';
 import {
+  DEFAULT_PLAYBACK_RATE,
   MAX_PLAYBACK_RATE,
   MIN_PLAYBACK_RATE,
   PlaybackService,
@@ -59,6 +60,25 @@ export class PlaybackControlsComponent {
     Math.round(this.playbackState().playbackRate * 100),
   );
   protected readonly masterVolumePercent = computed(() => Math.round(this.masterVolume() * 100));
+
+  /** Slider buffer signals — avoid [value] fighting native drag */
+  protected readonly sliderTempo = signal(Math.round(DEFAULT_PLAYBACK_RATE * 100));
+  protected readonly sliderVolume = signal(0);
+  private tempoDebounce: ReturnType<typeof setTimeout> | null = null;
+  private volumeDebounce: ReturnType<typeof setTimeout> | null = null;
+
+  constructor() {
+    // Init slider buffers from current service state
+    this.sliderVolume.set(this.masterVolumePercent());
+
+    // Keep slider buffer in sync when NOT dragging
+    effect(() => {
+      if (!this.tempoDebounce) this.sliderTempo.set(this.tempoScalePercent());
+    });
+    effect(() => {
+      if (!this.volumeDebounce) this.sliderVolume.set(this.masterVolumePercent());
+    });
+  }
   protected readonly midiTempoBpm = computed(() => {
     const tempoBpm = this.song()?.tempoBpm;
 
@@ -226,7 +246,18 @@ export class PlaybackControlsComponent {
       return;
     }
 
-    this.playbackService.setPlaybackRate(tempoPercent / 100);
+    // Update buffer immediately — no fighting
+    this.sliderTempo.set(tempoPercent);
+
+    // Debounce the actual service call (side effects: rehydrate, stopAllVoices)
+    if (this.tempoDebounce !== null) {
+      clearTimeout(this.tempoDebounce);
+    }
+
+    this.tempoDebounce = setTimeout(() => {
+      this.playbackService.setPlaybackRate(tempoPercent / 100);
+      this.tempoDebounce = null;
+    }, 60);
   }
 
   protected onHandModeChange(event: Event): void {
@@ -262,7 +293,18 @@ export class PlaybackControlsComponent {
       return;
     }
 
-    this.playbackAudioService.setMasterVolume(volumePercent / 100);
+    // Update buffer immediately
+    this.sliderVolume.set(volumePercent);
+
+    // Debounce actual audio node update
+    if (this.volumeDebounce !== null) {
+      clearTimeout(this.volumeDebounce);
+    }
+
+    this.volumeDebounce = setTimeout(() => {
+      this.playbackAudioService.setMasterVolume(volumePercent / 100);
+      this.volumeDebounce = null;
+    }, 60);
   }
 
   protected onShowNoteLabelsToggle(event: Event): void {

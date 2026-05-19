@@ -10,12 +10,14 @@ import { MAX_PLAYBACK_RATE, MIN_PLAYBACK_RATE, PlaybackService } from './playbac
 import { HandMode, PlayerSettingsService } from './player-settings.service';
 import { SongAnalysisService } from './song-analysis.service';
 
-const LOOKAHEAD_SECONDS = 0.12;
-const SCHEDULE_LEAD_SECONDS = 0.003;
+const LOOKAHEAD_SECONDS = 0.15;
+const SCHEDULE_LEAD_SECONDS = 0.006;
 const FORWARD_RESET_THRESHOLD_SECONDS = 0.55;
 const BACKWARD_RESET_THRESHOLD_SECONDS = -0.03;
-const DEFAULT_RELEASE_SECONDS = 0.05;
+const DEFAULT_RELEASE_SECONDS = 0.08;
+const DEFAULT_RELEASE_TIME_CONSTANT = 0.04;
 const DEFAULT_MASTER_VOLUME = 0.68;
+const FILTER_SMOOTHING_TIME_CONSTANT = 0.03;
 const POLYPHONY_GAIN_EXPONENT = 0.32;
 const DENSE_CHORD_MAKEUP_STEP = 0.025;
 const MAX_DENSE_CHORD_MAKEUP = 1.32;
@@ -274,11 +276,36 @@ export class PlaybackAudioService {
     }
 
     this.scheduleLookahead(song, safeCurrentTime, audioContext, handMode);
+
+    // Restore master gain after voices restart (tempo change, play resume)
+    if (needsRehydrate && isPlaying && audioContext && this.masterGainNode) {
+      this.restoreMasterGain(audioContext);
+    }
+
     this.wasPlaying = true;
     this.lastTransportTime = safeCurrentTime;
     this.scheduledSong = song;
     this.lastHandMode = handMode;
     this.lastInstrumentPresetId = selectedPresetId;
+  }
+
+  /**
+   * Restore master gain after rehydration following a duck (from stopAllVoices).
+   * Ramp from near-silence back to the user's volume setting.
+   */
+  private restoreMasterGain(audioContext: AudioContext): void {
+    if (!this.masterGainNode) {
+      return;
+    }
+
+    const now = audioContext.currentTime;
+
+    this.masterGainNode.gain.setValueAtTime(0.0001, now);
+    this.masterGainNode.gain.setTargetAtTime(
+      this.masterVolume(),
+      now,
+      0.015,
+    );
   }
 
   private resetSchedulerState(
@@ -495,16 +522,21 @@ export class PlaybackAudioService {
     oscillator.frequency.setValueAtTime(frequency, startTime);
     filter.type = 'lowpass';
     filter.Q.setValueAtTime(0.9, startTime);
-    filter.frequency.setValueAtTime(filterCutoff, startTime);
+    filter.frequency.setTargetAtTime(filterCutoff, startTime, FILTER_SMOOTHING_TIME_CONSTANT);
 
     gain.gain.setValueAtTime(0.0001, startTime);
-    gain.gain.linearRampToValueAtTime(voicePeakGain, startTime + instrumentPreset.attackSeconds);
-    gain.gain.linearRampToValueAtTime(
+    gain.gain.setTargetAtTime(voicePeakGain, startTime, instrumentPreset.attackSeconds);
+    gain.gain.setTargetAtTime(
       voiceSustainGain,
-      startTime + instrumentPreset.attackSeconds + instrumentPreset.decaySeconds,
+      startTime + instrumentPreset.attackSeconds,
+      instrumentPreset.decaySeconds,
     );
     gain.gain.setValueAtTime(voiceSustainGain, noteOffTime);
-    gain.gain.linearRampToValueAtTime(0.0001, noteOffTime + instrumentPreset.releaseSeconds);
+    gain.gain.setTargetAtTime(
+      0.0001,
+      noteOffTime,
+      Math.max(instrumentPreset.releaseSeconds, DEFAULT_RELEASE_TIME_CONSTANT),
+    );
 
     oscillator.connect(filter);
     filter.connect(gain);
@@ -534,7 +566,11 @@ export class PlaybackAudioService {
 
     voice.gain.gain.cancelScheduledValues(releaseStartTime);
     voice.gain.gain.setValueAtTime(currentGain, releaseStartTime);
-    voice.gain.gain.linearRampToValueAtTime(0.0001, releaseStartTime + DEFAULT_RELEASE_SECONDS);
+    voice.gain.gain.setTargetAtTime(
+      0.0001,
+      releaseStartTime,
+      DEFAULT_RELEASE_TIME_CONSTANT,
+    );
 
     voice.oscillator.stop(releaseStartTime + DEFAULT_RELEASE_SECONDS + 0.005);
     this.activeVoices.delete(noteId);
@@ -546,6 +582,16 @@ export class PlaybackAudioService {
     if (!audioContext) {
       this.activeVoices.clear();
       return;
+    }
+
+    // Duck master gain first: mask voice stop artifacts across ALL stop paths
+    // (tempo change, pause, stop). The duck reaches near-silence in ~9ms.
+    if (this.masterGainNode) {
+      const now = audioContext.currentTime;
+
+      this.masterGainNode.gain.cancelScheduledValues(now);
+      this.masterGainNode.gain.setValueAtTime(this.masterGainNode.gain.value, now);
+      this.masterGainNode.gain.setTargetAtTime(0.0001, now, 0.003);
     }
 
     for (const noteId of Array.from(this.activeVoices.keys())) {

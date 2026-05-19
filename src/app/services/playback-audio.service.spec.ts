@@ -136,6 +136,38 @@ describe('PlaybackAudioService', () => {
     expect(startsAfterSongChange).toBe(4);
   });
 
+  it('releases active voices with a short ramp when seeking forward', () => {
+    const scheduledSong: MidiSong = {
+      ...song,
+      duration: 2.2,
+      notes: [
+        { pitch: 60, velocity: 0.8, startTime: 0, duration: 1.2, track: 0 },
+        { pitch: 64, velocity: 0.8, startTime: 0.4, duration: 1, track: 0 },
+      ],
+    };
+
+    playbackService.setSong(scheduledSong);
+    playbackService.play();
+    TestBed.flushEffects();
+
+    playbackService.seek(1.1);
+    TestBed.flushEffects();
+
+    const releases = FakeAudioContext.lastInstance?.setTargetAtTimeCount ?? 0;
+
+    expect(releases).toBeGreaterThanOrEqual(1);
+  });
+
+  it('smooths gain and filter ramps when starting a note', () => {
+    playbackService.setSong(song);
+    playbackService.play();
+    TestBed.flushEffects();
+
+    const smoothingCalls = FakeAudioContext.lastInstance?.setTargetAtTimeCount ?? 0;
+
+    expect(smoothingCalls).toBeGreaterThanOrEqual(2);
+  });
+
   it('respects adaptive polyphony cap under frame pressure', () => {
     const denseChordSong: MidiSong = {
       ...song,
@@ -188,6 +220,8 @@ class FakeAudioContext {
   compressorCreateCount = 0;
   periodicWaveCreateCount = 0;
   periodicWaveSetCount = 0;
+  gainLinearRampCount = 0;
+  setTargetAtTimeCount = 0;
   resumeCalls = 0;
 
   constructor() {
@@ -195,7 +229,7 @@ class FakeAudioContext {
   }
 
   createGain(): GainNode {
-    return new FakeGainNode() as unknown as GainNode;
+    return new FakeGainNode(this) as unknown as GainNode;
   }
 
   createOscillator(): OscillatorNode {
@@ -229,7 +263,11 @@ class FakeAudioContext {
 }
 
 class FakeGainNode {
-  readonly gain = new FakeAudioParam();
+  readonly gain: FakeAudioParam;
+
+  constructor(audioContext: FakeAudioContext) {
+    this.gain = new FakeAudioParam(audioContext);
+  }
 
   connect(): void {
     return;
@@ -270,6 +308,8 @@ class FakeOscillatorNode {
 }
 
 class FakeAudioParam {
+  constructor(private readonly audioContext?: FakeAudioContext) {}
+
   value = 0;
 
   setValueAtTime(value: number): AudioParam {
@@ -279,6 +319,18 @@ class FakeAudioParam {
   }
 
   linearRampToValueAtTime(value: number): AudioParam {
+    if (this.audioContext) {
+      this.audioContext.gainLinearRampCount += 1;
+    }
+    this.value = value;
+
+    return this as unknown as AudioParam;
+  }
+
+  setTargetAtTime(value: number, _startTime: number, _timeConstant: number): AudioParam {
+    if (this.audioContext) {
+      this.audioContext.setTargetAtTimeCount += 1;
+    }
     this.value = value;
 
     return this as unknown as AudioParam;

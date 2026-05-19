@@ -193,7 +193,7 @@ export const siteContent = {
     idleState: 'Carga una cancion para habilitar el transporte y la practica.',
     tempo: {
       title: 'Velocidad',
-      hint: 'Ajusta la velocidad de reproduccion entre 20% y 200%.',
+      hint: 'Controla la velocidad en el HUD y compara BPM original con el actual.',
       fields: {
         scale: 'Ritmo',
         midiBpm: 'BPM original',

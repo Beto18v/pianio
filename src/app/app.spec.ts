@@ -40,9 +40,10 @@ describe('App', () => {
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
+    const welcomeCard = compiled.querySelector('.welcome-card');
 
-    expect(compiled.textContent).toContain(siteContent.appName);
-    expect(compiled.textContent).toContain(siteContent.welcome.title);
+    expect(welcomeCard?.textContent).toContain(siteContent.welcome.eyebrow);
+    expect(welcomeCard?.textContent).toContain(siteContent.welcome.title);
     expect(compiled.querySelector('#welcome-continue-button')).not.toBeNull();
     expect(compiled.querySelector('app-midi-upload')).toBeNull();
   });
