@@ -1,0 +1,132 @@
+{
+  "The Entertainer.mid": {
+    "artist": "Scott Joplin",
+    "difficulty": "Intermedio",
+    "featured": true,
+    "tags": ["ragtime", "ritmo", "clasico"]
+  },
+  "River Flows In You.mid": {
+    "artist": "Yiruma",
+    "difficulty": "Intermedio",
+    "featured": true,
+    "tags": ["melodico", "moderno", "romantico"]
+  },
+  "Hallelujah.mid": {
+    "artist": "Leonard Cohen",
+    "difficulty": "Principiante",
+    "featured": true,
+    "tags": ["balada", "acompanamiento", "popular"]
+  },
+  "Pirates of the Caribbean.mid": {
+    "artist": "Klaus Badelt",
+    "difficulty": "Intermedio",
+    "tags": ["cine", "energia", "ritmo"]
+  },
+  "Rondo Alla Turca.mid": {
+    "artist": "W. A. Mozart",
+    "difficulty": "Avanzado",
+    "tags": ["clasico", "velocidad", "articulacion"]
+  },
+  "Hungarian Dance No.5.mid": {
+    "artist": "Johannes Brahms",
+    "difficulty": "Avanzado",
+    "tags": ["clasico", "dinamica", "tecnica"]
+  },
+  "La Campanella.mid": {
+    "artist": "Franz Liszt",
+    "difficulty": "Avanzado",
+    "tags": ["virtuosismo", "saltos", "tecnica"]
+  },
+  "Rush E Original.mid": {
+    "artist": "Sheet Music Boss",
+    "difficulty": "Avanzado",
+    "tags": ["reto", "denso", "rapido"]
+  },
+  "Another love.mid": {
+    "artist": "Tom Odell",
+    "difficulty": "Intermedio",
+    "tags": ["melodico", "moderno", "romantico"]
+  },
+  "Ballade pour adeline.mid": {
+    "artist": "Richard Clayderman",
+    "difficulty": "Intermedio",
+    "tags": ["melodico", "romantico", "popular"]
+  },
+  "Bohemian Rhapsody.mid": {
+    "artist": "Queen",
+    "difficulty": "Intermedio",
+    "tags": ["rock", "popular", "dinamica"]
+  },
+  "Canon In D Major.mid": {
+    "artist": "Johann Pachelbel",
+    "difficulty": "Principiante",
+    "featured": true,
+    "tags": ["clasico", "melodico", "acompanamiento"]
+  },
+  "Clair de lune (Easy_Piano).mid": {
+    "artist": "Claude Debussy",
+    "difficulty": "Principiante",
+    "tags": ["clasico", "melodico", "impresionismo"]
+  },
+  "Clair deLune (Advanced).mid": {
+    "artist": "Claude Debussy",
+    "difficulty": "Avanzado",
+    "tags": ["clasico", "melodico", "impresionismo"]
+  },
+  "Fly Me to the Moon.mid": {
+    "artist": "Frank Sinatra",
+    "difficulty": "Intermedio",
+    "tags": ["jazz", "popular", "swing"]
+  },
+  "In The Hall of The Mountain King.mid": {
+    "artist": "Edvard Grieg",
+    "difficulty": "Intermedio",
+    "tags": ["clasico", "energia", "ritmo"]
+  },
+  "Married Life.mid": {
+    "artist": "Michael Giacchino",
+    "difficulty": "Intermedio",
+    "tags": ["cine", "melodico", "romantico"]
+  },
+  "Moonlight Sonata.mid": {
+    "artist": "Ludwig van Beethoven",
+    "difficulty": "Intermedio",
+    "tags": ["clasico", "melodico", "expresivo"]
+  },
+  "Nocturne In C# Minor.mid": {
+    "artist": "Frédéric Chopin",
+    "difficulty": "Avanzado",
+    "tags": ["clasico", "melodico", "expresivo"]
+  },
+  "Nocturne Op 9.mid": {
+    "artist": "Frédéric Chopin",
+    "difficulty": "Intermedio",
+    "tags": ["clasico", "melodico", "romantico"]
+  },
+  "Nuvole Bianche.mid": {
+    "artist": "Ludovico Einaudi",
+    "difficulty": "Intermedio",
+    "featured": true,
+    "tags": ["moderno", "melodico", "minimalismo"]
+  },
+  "Perfect.mid": {
+    "artist": "Ed Sheeran",
+    "difficulty": "Principiante",
+    "tags": ["popular", "balada", "romantico"]
+  },
+  "Sonate No 14 \"Moonlight\" 3rd Movement.mid": {
+    "artist": "Ludwig van Beethoven",
+    "difficulty": "Avanzado",
+    "tags": ["clasico", "velocidad", "virtuosismo"]
+  },
+  "The Forsaken Waltz.mid": {
+    "artist": "Desconocido",
+    "difficulty": "Intermedio",
+    "tags": ["vals", "melodico", "misterioso"]
+  },
+  "Waltz Of The Flowers.mid": {
+    "artist": "Pyotr Ilyich Tchaikovsky",
+    "difficulty": "Avanzado",
+    "tags": ["clasico", "vals", "orquestal"]
+  }
+}
