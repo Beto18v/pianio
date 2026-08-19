@@ -114,7 +114,7 @@
     "difficulty": "Principiante",
     "tags": ["popular", "balada", "romantico"]
   },
-  "Sonate No 14 \"Moonlight\" 3rd Movement.mid": {
+  "Sonate No 14 \u201CMoonlight\u201D 3rd Movement.mid": {
     "artist": "Ludwig van Beethoven",
     "difficulty": "Avanzado",
     "tags": ["clasico", "velocidad", "virtuosismo"]
@@ -128,5 +128,35 @@
     "artist": "Pyotr Ilyich Tchaikovsky",
     "difficulty": "Avanzado",
     "tags": ["clasico", "vals", "orquestal"]
+  },
+  "Dark Is the Night.mid": {
+    "artist": "Nikita Bogoslovsky",
+    "difficulty": "Intermedio",
+    "tags": ["melodico", "balada", "clasico"]
+  },
+  "Korobeiniki.mid": {
+    "artist": "Tradicional rusa",
+    "difficulty": "Intermedio",
+    "tags": ["popular", "ritmo", "tradicional"]
+  },
+  "Pine Apple Rag.mid": {
+    "artist": "Scott Joplin",
+    "difficulty": "Intermedio",
+    "tags": ["ragtime", "ritmo", "clasico"]
+  },
+  "Por una Cabeza.mid": {
+    "artist": "Carlos Gardel",
+    "difficulty": "Intermedio",
+    "tags": ["tango", "ritmo", "cine"]
+  },
+  "The Cascades.mid": {
+    "artist": "Scott Joplin",
+    "difficulty": "Intermedio",
+    "tags": ["ragtime", "ritmo", "clasico"]
+  },
+  "The Lonely Waltz.mid": {
+    "artist": "Joshua Kyan Aalampour",
+    "difficulty": "Intermedio",
+    "tags": ["vals", "melodico", "expresivo"]
   }
 }
